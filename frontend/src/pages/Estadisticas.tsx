@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { obtenerDiarioAlimentario, obtenerPerfil } from '../services/api';
@@ -129,40 +129,49 @@ export default function Estadisticas() {
               </span>
             </div>
           </div>
-          <div className="flex items-end justify-between gap-2" style={{ height: '140px' }}>
-            {semana.map(({ day, kcal }) => (
-              <div key={day} className="flex-1 flex flex-col items-center justify-end h-full">
-                <div className="w-full flex flex-col justify-end" style={{ height: '100px' }}>
-                  {kcal > 0 ? (
-                    <div
-                      className={`w-full rounded-t-md transition-all ${kcal > META_KCAL ? 'bg-nutri-secondary' : 'bg-nutri-primary'}`}
-                      style={{ height: `${(kcal / maxKcal) * 100}px` }}
-                    />
-                  ) : (
-                    <div className="w-full rounded-t-md bg-nutri-gray-100" style={{ height: '4px' }} />
-                  )}
-                </div>
-                <p className="text-xs font-medium text-nutri-gray-700 mt-2">{day}</p>
-                <p className="text-xs text-nutri-gray-400">{kcal > 0 ? kcal.toFixed(0) : '—'}</p>
-              </div>
-            ))}
-          </div>
+          {/* SVG chart — evita inline styles para valores dinámicos */}
+          <svg width="100%" height="140" aria-label="Gráfico de calorías semanales" role="img">
+            {semana.map(({ day, kcal }, i) => {
+              const BAR_H = 90;
+              const barH = kcal > 0 ? Math.max(4, (kcal / maxKcal) * BAR_H) : 4;
+              const slotW = 100 / semana.length;
+              const x = i * slotW + slotW * 0.15;
+              const w = slotW * 0.7;
+              const y = BAR_H - barH;
+              const fill = kcal > META_KCAL ? '#E74C3C' : kcal > 0 ? '#4A7C59' : '#EEEEEE';
+              return (
+                <g key={day}>
+                  <rect x={`${x}%`} y={y} width={`${w}%`} height={barH} fill={fill} rx="4" />
+                  <text x={`${x + w / 2}%`} y="110" textAnchor="middle" fontSize="10" fill="#616161" fontFamily="Inter, sans-serif">
+                    {day}
+                  </text>
+                  <text x={`${x + w / 2}%`} y="128" textAnchor="middle" fontSize="9" fill="#9E9E9E" fontFamily="Inter, sans-serif">
+                    {kcal > 0 ? kcal.toFixed(0) : '—'}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* Macros */}
           <div className="bg-white rounded-2xl border border-nutri-gray-200 p-6 shadow-sm">
             <h2 className="font-semibold text-nutri-gray-900 mb-4">Distribución de Macros</h2>
-            <div className="flex rounded-full overflow-hidden h-3 mb-5">
-              {macros.map(({ label, pct, color }) => (
-                <div
-                  key={label}
-                  className={`${color} h-full`}
-                  style={{ width: `${pct}%` }}
-                  title={`${label}: ${pct}%`}
-                />
-              ))}
-            </div>
+            <svg width="100%" height="12" className="mb-5 rounded-full overflow-hidden" aria-label="Distribución de macros" role="img">
+              {macros.reduce<{ offset: number; els: ReactNode[] }>(
+                ({ offset, els }, { label, pct, color }, i) => {
+                  const fill = color === 'bg-nutri-info' ? '#5C6BC0' : color === 'bg-nutri-accent' ? '#FF9800' : '#7CB342';
+                  els.push(
+                    <rect key={i} x={`${offset}%`} y="0" width={`${pct}%`} height="12" fill={fill}>
+                      <title>{label}: {pct}%</title>
+                    </rect>
+                  );
+                  return { offset: offset + pct, els };
+                },
+                { offset: 0, els: [] }
+              ).els}
+            </svg>
             <div className="space-y-3">
               {macros.map(({ label, pct, color, grams }) => (
                 <div key={label} className="flex items-center justify-between">

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, AlertCircle, CheckCircle, Heart } from 'lucide-react';
 import { enviarConsulta } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Message {
   id: string;

@@ -2,80 +2,103 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
 
 @theme {
-  --color-nutri-primary: #4A7C59;
-  --color-nutri-primary-dark: #2F5233;
-  --color-nutri-primary-light: #7CB342;
-  --color-nutri-secondary: #E74C3C;
-  --color-nutri-accent: #FF9800;
-  --color-nutri-info: #5C6BC0;
-  --color-nutri-success: #7CB342;
-  --color-nutri-danger: #E57373;
+  /* Paleta Refinada: Menos saturación, más elegancia */
+  --color-nutri-dark: #1A1C1E;
+  --color-nutri-gray-body: #4A4D50;
+  --color-nutri-gray-light: #F8FAFC;
   
-  --color-nutri-gray-50: #FAFAFA;
-  --color-nutri-gray-100: #F5F5F5;
-  --color-nutri-gray-200: #EEEEEE;
-  --color-nutri-gray-300: #E0E0E0;
-  --color-nutri-gray-400: #BDBDBD;
-  --color-nutri-gray-500: #9E9E9E;
-  --color-nutri-gray-600: #757575;
-  --color-nutri-gray-700: #616161;
-  --color-nutri-gray-800: #424242;
-  --color-nutri-gray-900: #212121;
+  /* Tus colores originales, pero balanceados */
+  --color-nutri-primary: #386641;       /* Verde más profundo y menos chillón */
+  --color-nutri-primary-soft: #F2F7F2;  /* Para fondos de tarjetas */
+  --color-nutri-accent-red: #BC4749;    /* Un rojo más terracota, menos neón */
   
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Poppins', system-ui, sans-serif;
+  /* Tipografía Escalar (Previene que el texto explote) */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Poppins', sans-serif;
   
-  --shadow-soft: 0 2px 8px rgb(74 124 89 / 0.1);
-  --shadow-medium: 0 4px 16px rgb(74 124 89 / 0.15);
-  --shadow-strong: 0 8px 24px rgb(74 124 89 / 0.2);
-  
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  /* Sombras y Bordes */
+  --shadow-subtle: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+  --radius-custom: 1.25rem;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* --- Reset y Mejoras de Lectura --- */
 html {
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
   font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: white;
-  color: var(--color-nutri-gray-800);
+  background-color: #FFFFFF;
+  color: var(--color-nutri-gray-body);
+  line-height: 1.5;
 }
 
-h1, h2, h3, h4, h5, h6 {
+/* --- Jerarquía de Títulos (El problema de tu imagen) --- */
+h1 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.5rem); /* Se ajusta solo al tamaño de pantalla */
+  line-height: 1.1;
+  color: var(--color-nutri-dark);
+  letter-spacing: -0.04em;
+  margin-bottom: 1rem;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--color-nutri-dark);
+  letter-spacing: -0.02em;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--color-nutri-gray-100);
-  border-radius: 4px;
+p {
+  font-size: 1.125rem;
+  max-width: 65ch; /* Evita que las líneas sean demasiado largas y cansen */
+  margin-inline: auto; /* Centra el texto de descripción */
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-nutri-primary);
-  border-radius: 4px;
+/* --- Ajuste de Contenedores y Tarjetas --- */
+.card-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  padding: 2rem 0;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-nutri-primary-dark);
+.feature-card {
+  background: var(--color-nutri-gray-light);
+  border: 1px solid rgba(0,0,0,0.03);
+  padding: 2rem;
+  border-radius: var(--radius-custom);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-::selection {
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-subtle);
+  background: white;
+}
+
+/* --- Botones y CTAs --- */
+.btn-primary {
   background-color: var(--color-nutri-primary);
   color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 99px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+
+/* --- Footer / Sección Final (Mejorando ese bloque verde oscuro) --- */
+.cta-section {
+  background-color: var(--color-nutri-dark); /* Cambiado a gris muy oscuro para elegancia */
+  color: white;
+  padding: 4rem 2rem;
+  border-radius: var(--radius-custom);
+  text-align: center;
+  margin: 2rem;
+}
+
+.cta-section h2 { color: white; }
