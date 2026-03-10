@@ -1,189 +1,204 @@
-import React from 'react';
-import { Heart, CheckCircle, XCircle, AlertCircle, Clock, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Heart, ArrowRight, MessageSquare, BarChart3, Calendar, User } from 'lucide-react';
 
 const Landing = () => {
+  const handleNavigation = (path: string) => {
+    window.location.href = path;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-nutri-primary/5">
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="border-b border-nutri-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => handleNavigation('/')}>
+              <Heart className="w-8 h-8 text-nutri-secondary fill-nutri-secondary" />
+              <span className="text-2xl font-bold text-nutri-primary">NutriRiesgo</span>
+            </div>
+            <button
+              onClick={() => handleNavigation('/login')}
+              className="px-6 py-2 bg-nutri-primary text-white rounded-lg hover:bg-nutri-primary-dark transition-colors font-medium"
+            >
+              Iniciar Sesión
+            </button>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Logo y Título */}
-            <div className="text-center md:text-left animate-[slideUp_0.4s_ease-out]">
-              <div className="flex items-center justify-center md:justify-start mb-6">
-                <div className="relative">
-                  <Heart 
-                    className="w-16 h-16 text-nutri-secondary fill-nutri-secondary"
-                    strokeWidth={1.5}
-                  />
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-nutri-primary rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">💪</span>
-                  </div>
-                </div>
-                <h1 className="text-5xl md:text-6xl font-display font-bold text-nutri-primary ml-4">
-                  Nutri-Riesgo
-                </h1>
+      <section className="pt-20 pb-32 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-5xl md:text-6xl font-bold text-nutri-gray-900 mb-6">
+            Tu Asistente Inteligente de
+            <span className="block text-nutri-primary mt-2">Nutrición y Salud</span>
+          </h1>
+          <p className="text-xl text-nutri-gray-600 mb-8 max-w-2xl mx-auto">
+            Plataforma impulsada por IA para orientación nutricional y prevención cardiovascular
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => handleNavigation('/login')}
+              className="inline-flex items-center justify-center px-8 py-4 bg-nutri-primary text-white rounded-xl hover:bg-nutri-primary-dark transition-all font-semibold text-lg shadow-lg hover:shadow-xl"
+            >
+              Comenzar Gratis
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleNavigation('/chat')}
+              className="inline-flex items-center justify-center px-8 py-4 bg-white text-nutri-primary border-2 border-nutri-primary rounded-xl hover:bg-nutri-primary/5 transition-all font-semibold text-lg"
+            >
+              Probar Demo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 bg-nutri-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-nutri-gray-900 mb-12">
+            Características Principales
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-nutri-primary/10 rounded-xl flex items-center justify-center mb-4">
+                <MessageSquare className="w-7 h-7 text-nutri-primary" />
               </div>
-              
-              <h2 className="text-2xl md:text-3xl font-bold text-nutri-gray-800 mb-4">
-                Participa en el estudio Inteligencia Artificial:
-              </h2>
-              
-              <p className="text-lg text-nutri-gray-700 mb-6 leading-relaxed">
-                Herramienta para la <span className="font-semibold text-nutri-primary">Orientación Alimentaria Preventiva</span> y{' '}
-                <span className="font-semibold text-nutri-secondary">Estimación No Diagnóstica del Riesgo Cardiometabólico</span>
+              <h3 className="text-lg font-semibold text-nutri-gray-900 mb-2">
+                Chat con IA
+              </h3>
+              <p className="text-nutri-gray-600 text-sm">
+                Consultas nutricionales en tiempo real con respuestas basadas en evidencia científica
               </p>
-
-              <div className="bg-nutri-primary/10 border-l-4 border-nutri-primary p-4 rounded-r-lg mb-8">
-                <p className="text-nutri-primary font-semibold text-lg">
-                  ¿Qué harás?
-                </p>
-                <p className="text-nutri-gray-700 mt-2">
-                  Utilizar la plataforma para registrar tus alimentos y aumentar la conciencia sobre tu consumo nutricional.
-                </p>
-              </div>
-
-              <Link
-                to="/chat"
-                className="inline-flex items-center px-8 py-4 bg-nutri-primary text-white font-semibold rounded-xl hover:bg-nutri-primary-dark transition-all duration-300 shadow-[var(--shadow-medium)] hover:shadow-[var(--shadow-strong)] transform hover:scale-105"
-              >
-                Comenzar Ahora
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
             </div>
 
-            {/* Requisitos */}
-            <div className="bg-white rounded-2xl shadow-[var(--shadow-strong)] p-8 animate-[fadeIn_0.3s_ease-in-out]">
-              <h3 className="text-2xl font-bold text-nutri-gray-800 mb-6">
-                Requisitos Mínimos:
+            {/* Feature 2 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-nutri-success/10 rounded-xl flex items-center justify-center mb-4">
+                <Calendar className="w-7 h-7 text-nutri-success" />
+              </div>
+              <h3 className="text-lg font-semibold text-nutri-gray-900 mb-2">
+                Diario Alimentario
               </h3>
+              <p className="text-nutri-gray-600 text-sm">
+                Registra tus comidas diarias y obtén análisis nutricional automático
+              </p>
+            </div>
 
-              <div className="space-y-4">
-                {/* Requisito Cumplido */}
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 mt-1">
-                    <CheckCircle className="w-6 h-6 text-nutri-success" />
-                  </div>
-                  <p className="text-nutri-gray-700">
-                    Ser <span className="font-semibold">Estudiante de la UNAH</span> en el Campus Comayagua
-                  </p>
-                </div>
-
-                {/* Requisito No Cumplido */}
-                <div className="flex items-start space-x-3 opacity-60">
-                  <div className="flex-shrink-0 mt-1">
-                    <XCircle className="w-6 h-6 text-nutri-danger" />
-                  </div>
-                  <p className="text-nutri-gray-700 line-through">
-                    Personas de 18 años o más
-                  </p>
-                </div>
-
-                {/* Advertencia */}
-                <div className="flex items-start space-x-3 bg-nutri-accent/10 p-4 rounded-lg">
-                  <div className="flex-shrink-0 mt-1">
-                    <AlertCircle className="w-6 h-6 text-nutri-accent" />
-                  </div>
-                  <p className="text-nutri-gray-700 text-sm">
-                    Primer contacto de participación y consentimiento para la plataforma, asegurándose que los datos se utilicen únicamente con fines de investigación.
-                  </p>
-                </div>
-
-                {/* Compromiso */}
-                <div className="flex items-start space-x-3 bg-nutri-info/10 p-4 rounded-lg">
-                  <div className="flex-shrink-0 mt-1">
-                    <Clock className="w-6 h-6 text-nutri-info" />
-                  </div>
-                  <p className="text-nutri-gray-700 text-sm">
-                    Compromiso de utilización de la plataforma por un período mínimo de <span className="font-semibold">7 días</span>.
-                  </p>
-                </div>
+            {/* Feature 3 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-nutri-secondary/10 rounded-xl flex items-center justify-center mb-4">
+                <BarChart3 className="w-7 h-7 text-nutri-secondary" />
               </div>
+              <h3 className="text-lg font-semibold text-nutri-gray-900 mb-2">
+                Estadísticas
+              </h3>
+              <p className="text-nutri-gray-600 text-sm">
+                Visualiza tu progreso y patrones alimentarios con gráficos interactivos
+              </p>
+            </div>
 
-              {/* CTA */}
-              <div className="mt-8 p-6 bg-gradient-to-r from-nutri-primary to-nutri-primary-dark rounded-xl text-center">
-                <p className="text-white font-bold text-xl mb-2">
-                  ¿Te interesa participar?
-                </p>
-                <p className="text-white/90 text-sm mb-4">
-                  Escribe al número:
-                </p>
-                <a 
-                  href="tel:+50496813882"
-                  className="inline-block px-6 py-3 bg-white text-nutri-primary font-bold rounded-lg hover:bg-nutri-gray-50 transition-colors"
-                >
-                  +504 9681-3882
-                </a>
+            {/* Feature 4 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-14 h-14 bg-nutri-info/10 rounded-xl flex items-center justify-center mb-4">
+                <User className="w-7 h-7 text-nutri-info" />
               </div>
+              <h3 className="text-lg font-semibold text-nutri-gray-900 mb-2">
+                Perfil Personalizado
+              </h3>
+              <p className="text-nutri-gray-600 text-sm">
+                Recomendaciones adaptadas a tu edad, peso, altura y objetivos de salud
+              </p>
             </div>
           </div>
         </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-nutri-primary/5 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-nutri-secondary/5 rounded-full blur-3xl -z-10" />
       </section>
 
-      {/* Características */}
-      <section className="py-16 bg-white">
+      {/* Stats */}
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-nutri-gray-800 mb-12">
-            ¿Qué ofrece la plataforma?
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Característica 1 */}
-            <div className="bg-gradient-to-br from-nutri-primary/10 to-nutri-primary/5 rounded-xl p-6 hover:shadow-[var(--shadow-medium)] transition-shadow">
-              <div className="w-12 h-12 bg-nutri-primary rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">🤖</span>
-              </div>
-              <h3 className="text-xl font-semibold text-nutri-gray-800 mb-2">
-                Chat con IA
-              </h3>
-              <p className="text-nutri-gray-600">
-                Consulta sobre nutrición con respuestas basadas en guías de OMS, INCAP y autoridades hondureñas.
-              </p>
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-4xl font-bold text-nutri-primary mb-2">92,000+</div>
+              <div className="text-nutri-gray-600">Alimentos en Base de Datos</div>
             </div>
-
-            {/* Característica 2 */}
-            <div className="bg-gradient-to-br from-nutri-success/10 to-nutri-success/5 rounded-xl p-6 hover:shadow-[var(--shadow-medium)] transition-shadow">
-              <div className="w-12 h-12 bg-nutri-success rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">🥗</span>
-              </div>
-              <h3 className="text-xl font-semibold text-nutri-gray-800 mb-2">
-                Base de Alimentos
-              </h3>
-              <p className="text-nutri-gray-600">
-                Accede a más de 92,000 alimentos con información nutricional completa, incluyendo alimentos hondureños.
-              </p>
+            <div>
+              <div className="text-4xl font-bold text-nutri-success mb-2">649</div>
+              <div className="text-nutri-gray-600">Guías de Nutrición</div>
             </div>
-
-            {/* Característica 3 */}
-            <div className="bg-gradient-to-br from-nutri-secondary/10 to-nutri-secondary/5 rounded-xl p-6 hover:shadow-[var(--shadow-medium)] transition-shadow">
-              <div className="w-12 h-12 bg-nutri-secondary rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">❤️</span>
-              </div>
-              <h3 className="text-xl font-semibold text-nutri-gray-800 mb-2">
-                Evaluación de Riesgo
-              </h3>
-              <p className="text-nutri-gray-600">
-                Estimación no diagnóstica del riesgo cardiometabólico basado en tus datos personales.
-              </p>
+            <div>
+              <div className="text-4xl font-bold text-nutri-secondary mb-2">24/7</div>
+              <div className="text-nutri-gray-600">Asistente Disponible</div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 bg-linear-to-r from-nutri-primary to-nutri-primary-dark">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            ¿Listo para comenzar tu transformación?
+          </h2>
+          <p className="text-white/90 text-lg mb-8">
+            Únete a NutriRiesgo-UNAH y toma control de tu salud nutricional
+          </p>
+          <button
+            onClick={() => handleNavigation('/login')}
+            className="inline-flex items-center px-8 py-4 bg-white text-nutri-primary rounded-xl hover:bg-nutri-gray-50 transition-colors font-semibold text-lg shadow-lg"
+          >
+            Registrarse Ahora
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-nutri-primary-dark text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sm opacity-90">
-            DATOS SOLO PARA FINES DE INVESTIGACIÓN
-          </p>
-          <p className="text-xs opacity-75 mt-2">
-            NutriRiesgo-UNAH © 2026 - Universidad Nacional Autónoma de Honduras
-          </p>
+      <footer className="bg-nutri-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <Heart className="w-6 h-6 text-nutri-secondary fill-nutri-secondary" />
+                <span className="text-xl font-bold">NutriRiesgo</span>
+              </div>
+              <p className="text-nutri-gray-400 text-sm">
+                Plataforma de orientación nutricional impulsada por IA para estudiantes UNAH
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Enlaces</h3>
+              <ul className="space-y-2 text-sm text-nutri-gray-400">
+                <li>
+                  <button onClick={() => handleNavigation('/chat')} className="hover:text-white transition-colors">
+                    Chat
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/alimentos')} className="hover:text-white transition-colors">
+                    Alimentos
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => handleNavigation('/estadisticas')} className="hover:text-white transition-colors">
+                    Estadísticas
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Contacto</h3>
+              <p className="text-sm text-nutri-gray-400">
+                +504 9681-3882<br />
+                UNAH Comayagua<br />
+                Solo fines de investigación
+              </p>
+            </div>
+          </div>
+          <div className="border-t border-nutri-gray-800 mt-8 pt-8 text-center text-sm text-nutri-gray-400">
+            © 2026 NutriRiesgo-UNAH. Universidad Nacional Autónoma de Honduras
+          </div>
         </div>
       </footer>
     </div>
