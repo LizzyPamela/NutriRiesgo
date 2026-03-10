@@ -1,33 +1,44 @@
-import { useState, FormEvent } from 'react';
-import { Save, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { obtenerPerfil, crearOActualizarPerfil } from '../services/api';
 
-type Sexo = 'M' | 'F' | '';
-type NivelActividad = 'sedentario' | 'ligero' | 'moderado' | 'activo' | 'muy_activo';
-type Objetivo = 'mantener' | 'perder' | 'ganar';
+// Tipos alineados con el backend (perfil.py)
+type Sexo = 'masculino' | 'femenino' | '';
+type ActividadFisica = 'sedentario' | 'ligero' | 'moderado' | 'intenso' | 'muy_intenso';
+
+interface AntecedentesFA {
+  diabetes: boolean;
+  hipertension: boolean;
+  cardiopatia: boolean;
+  obesidad: boolean;
+}
 
 interface PerfilForm {
   nombre: string;
-  email: string;
   edad: string;
   sexo: Sexo;
   peso_kg: string;
   altura_cm: string;
-  nivel_actividad: NivelActividad;
-  objetivo: Objetivo;
+  perimetro_cintura_cm: string;
+  actividad_fisica: ActividadFisica;
+  fumador: boolean;
+  antecedentes_familiares: AntecedentesFA;
 }
 
-const nivelesActividad: { value: NivelActividad; label: string }[] = [
+const nivelesActividad: { value: ActividadFisica; label: string }[] = [
   { value: 'sedentario', label: 'Sedentario (sin ejercicio)' },
   { value: 'ligero', label: 'Ligero (1-3 días/semana)' },
   { value: 'moderado', label: 'Moderado (3-5 días/semana)' },
-  { value: 'activo', label: 'Activo (6-7 días/semana)' },
-  { value: 'muy_activo', label: 'Muy activo (2 veces al día)' },
+  { value: 'intenso', label: 'Intenso (6-7 días/semana)' },
+  { value: 'muy_intenso', label: 'Muy intenso (2 veces al día)' },
 ];
 
-const objetivos: { value: Objetivo; label: string }[] = [
-  { value: 'mantener', label: 'Mantener peso' },
-  { value: 'perder', label: 'Perder peso' },
-  { value: 'ganar', label: 'Ganar músculo' },
+const antecedentesLabels: { key: keyof AntecedentesFA; label: string }[] = [
+  { key: 'diabetes', label: 'Diabetes' },
+  { key: 'hipertension', label: 'Hipertensión' },
+  { key: 'cardiopatia', label: 'Cardiopatía' },
+  { key: 'obesidad', label: 'Obesidad' },
 ];
 
 function calcularIMC(peso: string, altura: string): string | null {
@@ -44,54 +55,99 @@ function categoriaIMC(imc: number): { label: string; color: string } {
   return { label: 'Obesidad', color: 'text-nutri-secondary' };
 }
 
-export default function Perfil() {
-  const user: { nombre?: string; email?: string } = JSON.parse(
-    localStorage.getItem('user') || '{}'
-  );
-  const saved_perfil: Partial<PerfilForm> = JSON.parse(
-    localStorage.getItem('perfil') || '{}'
-  );
+const defaultForm: PerfilForm = {
+  nombre: '',
+  edad: '',
+  sexo: '',
+  peso_kg: '',
+  altura_cm: '',
+  perimetro_cintura_cm: '',
+  actividad_fisica: 'moderado',
+  fumador: false,
+  antecedentes_familiares: {
+    diabetes: false,
+    hipertension: false,
+    cardiopatia: false,
+    obesidad: false,
+  },
+};
 
-  const [form, setForm] = useState<PerfilForm>({
-    nombre: user.nombre || '',
-    email: user.email || '',
-    edad: saved_perfil.edad || '',
-    sexo: saved_perfil.sexo || '',
-    peso_kg: saved_perfil.peso_kg || '',
-    altura_cm: saved_perfil.altura_cm || '',
-    nivel_actividad: saved_perfil.nivel_actividad || 'moderado',
-    objetivo: saved_perfil.objetivo || 'mantener',
-  });
+export default function Perfil() {
+  const { userId, displayName, user } = useAuth();
+  const [form, setForm] = useState<PerfilForm>({ ...defaultForm, nombre: displayName });
   const [guardado, setGuardado] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [perfilBackend, setPerfilBackend] = useState<{ imc?: number; categoria_riesgo?: string; riesgo_prevent?: number } | null>(null);
+
+  // Cargar perfil existente del backend
+  useEffect(() => {
+    if (!userId) return;
+    obtenerPerfil(userId)
+      .then((data) => {
+        setPerfilBackend(data);
+        // Poblar form con datos existentes
+        setForm((prev) => ({
+          ...prev,
+          nombre: displayName,
+          edad: data.edad ? String(data.edad) : prev.edad,
+          sexo: data.sexo ?? prev.sexo,
+          peso_kg: data.peso_kg ? String(data.peso_kg) : prev.peso_kg,
+          altura_cm: data.altura_cm ? String(data.altura_cm) : prev.altura_cm,
+          perimetro_cintura_cm: data.perimetro_cintura_cm ? String(data.perimetro_cintura_cm) : prev.perimetro_cintura_cm,
+          actividad_fisica: data.actividad_fisica ?? prev.actividad_fisica,
+          fumador: data.fumador ?? prev.fumador,
+          antecedentes_familiares: data.antecedentes_familiares ?? prev.antecedentes_familiares,
+        }));
+      })
+      .catch(() => {/* perfil aún no existe */})
+      .finally(() => setLoading(false));
+  }, [userId, displayName]);
 
   const imc = calcularIMC(form.peso_kg, form.altura_cm);
   const imcNum = imc ? parseFloat(imc) : null;
 
-  const set = (field: keyof PerfilForm) => (value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    setGuardado(false);
+  const set = <K extends keyof PerfilForm>(field: K) =>
+    (value: PerfilForm[K]) => {
+      setForm((prev) => ({ ...prev, [field]: value }));
+      setGuardado(false);
+    };
+
+  const handleSave = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    if (!userId) return;
+    setError('');
+    setSaving(true);
+    try {
+      const payload = {
+        edad: form.edad ? parseInt(form.edad) : null,
+        sexo: form.sexo || null,
+        peso_kg: form.peso_kg ? parseFloat(form.peso_kg) : null,
+        altura_cm: form.altura_cm ? parseFloat(form.altura_cm) : null,
+        perimetro_cintura_cm: form.perimetro_cintura_cm ? parseFloat(form.perimetro_cintura_cm) : null,
+        actividad_fisica: form.actividad_fisica,
+        fumador: form.fumador,
+        antecedentes_familiares: form.antecedentes_familiares,
+      };
+      const data = await crearOActualizarPerfil(userId, payload);
+      setPerfilBackend(data);
+      setGuardado(true);
+      setTimeout(() => setGuardado(false), 3000);
+    } catch {
+      setError('Error al guardar. Verifica tu conexión con el servidor.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = (e: FormEvent) => {
-    e.preventDefault();
-    localStorage.setItem(
-      'user',
-      JSON.stringify({ nombre: form.nombre, email: form.email })
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-nutri-primary animate-spin" />
+      </div>
     );
-    localStorage.setItem(
-      'perfil',
-      JSON.stringify({
-        edad: form.edad,
-        sexo: form.sexo,
-        peso_kg: form.peso_kg,
-        altura_cm: form.altura_cm,
-        nivel_actividad: form.nivel_actividad,
-        objetivo: form.objetivo,
-      })
-    );
-    setGuardado(true);
-    setTimeout(() => setGuardado(false), 3000);
-  };
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8">
@@ -99,12 +155,12 @@ export default function Perfil() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-nutri-gray-900">Perfil</h1>
           <p className="text-nutri-gray-600 text-sm mt-1">
-            Tus datos para recomendaciones nutricionales personalizadas
+            {user?.email} &middot; Datos para recomendaciones personalizadas
           </p>
         </div>
 
         {/* IMC Card */}
-        {imc && imcNum && (
+        {(imc && imcNum) && (
           <div className="bg-white rounded-2xl border border-nutri-gray-200 p-5 mb-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -114,19 +170,33 @@ export default function Perfil() {
                   {categoriaIMC(imcNum).label}
                 </p>
               </div>
-              <div className="text-right text-sm text-nutri-gray-400">
-                <p>{form.peso_kg} kg</p>
-                <p>{form.altura_cm} cm</p>
-              </div>
+              {perfilBackend && (
+                <div className="text-right">
+                  {perfilBackend.categoria_riesgo && (
+                    <p className="text-xs text-nutri-gray-500">
+                      Riesgo: <span className="font-semibold text-nutri-gray-800">{perfilBackend.categoria_riesgo}</span>
+                    </p>
+                  )}
+                  {perfilBackend.riesgo_prevent != null && (
+                    <p className="text-xs text-nutri-gray-500 mt-0.5">
+                      PREVENT: <span className="font-semibold text-nutri-gray-800">{(perfilBackend.riesgo_prevent * 100).toFixed(1)}%</span>
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Form */}
-        <form
-          onSubmit={handleSave}
-          className="bg-white rounded-2xl border border-nutri-gray-200 p-6 shadow-sm space-y-7"
-        >
+        {error && (
+          <div className="flex items-start space-x-2 bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSave} className="bg-white rounded-2xl border border-nutri-gray-200 p-6 shadow-sm space-y-7">
+
           {/* Datos personales */}
           <section>
             <h2 className="font-semibold text-nutri-gray-900 mb-4 pb-2 border-b border-nutri-gray-100">
@@ -134,58 +204,27 @@ export default function Perfil() {
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Nombre
-                </label>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Edad (años)</label>
                 <input
-                  type="text"
-                  value={form.nombre}
-                  onChange={(e) => set('nombre')(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Correo
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => set('email')(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Edad (años)
-                </label>
-                <input
-                  type="number"
-                  value={form.edad}
+                  type="number" value={form.edad}
                   onChange={(e) => set('edad')(e.target.value)}
-                  min="1"
-                  max="120"
-                  placeholder="ej: 22"
+                  min="1" max="120" placeholder="ej: 22"
                   className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Sexo
-                </label>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Sexo biológico</label>
                 <div className="flex space-x-3">
-                  {(['M', 'F'] as const).map((v) => (
+                  {(['masculino', 'femenino'] as Sexo[]).map((v) => (
                     <button
-                      key={v}
-                      type="button"
-                      onClick={() => set('sexo')(v)}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+                      key={v} type="button" onClick={() => set('sexo')(v)}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors capitalize ${
                         form.sexo === v
                           ? 'bg-nutri-primary text-white border-nutri-primary'
                           : 'border-nutri-gray-200 text-nutri-gray-700 hover:border-nutri-gray-300'
                       }`}
                     >
-                      {v === 'M' ? 'Masculino' : 'Femenino'}
+                      {v}
                     </button>
                   ))}
                 </div>
@@ -196,35 +235,33 @@ export default function Perfil() {
           {/* Medidas */}
           <section>
             <h2 className="font-semibold text-nutri-gray-900 mb-4 pb-2 border-b border-nutri-gray-100">
-              Medidas
+              Medidas Corporales
             </h2>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Peso (kg)
-                </label>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Peso (kg)</label>
                 <input
-                  type="number"
-                  value={form.peso_kg}
+                  type="number" value={form.peso_kg}
                   onChange={(e) => set('peso_kg')(e.target.value)}
-                  min="20"
-                  max="300"
-                  step="0.1"
-                  placeholder="ej: 68.5"
+                  min="20" max="300" step="0.1" placeholder="ej: 68.5"
                   className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Altura (cm)
-                </label>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Altura (cm)</label>
                 <input
-                  type="number"
-                  value={form.altura_cm}
+                  type="number" value={form.altura_cm}
                   onChange={(e) => set('altura_cm')(e.target.value)}
-                  min="100"
-                  max="250"
-                  placeholder="ej: 165"
+                  min="100" max="250" placeholder="ej: 165"
+                  className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Cintura (cm)</label>
+                <input
+                  type="number" value={form.perimetro_cintura_cm}
+                  onChange={(e) => set('perimetro_cintura_cm')(e.target.value)}
+                  min="40" max="200" placeholder="ej: 82"
                   className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
                 />
               </div>
@@ -238,60 +275,67 @@ export default function Perfil() {
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Nivel de Actividad
-                </label>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Actividad Física</label>
                 <select
-                  value={form.nivel_actividad}
-                  onChange={(e) => set('nivel_actividad')(e.target.value)}
+                  value={form.actividad_fisica}
+                  onChange={(e) => set('actividad_fisica')(e.target.value as ActividadFisica)}
                   className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none bg-white"
                 >
                   {nivelesActividad.map(({ value, label }) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
+                    <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
-                  Objetivo
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {objetivos.map(({ value, label }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => set('objetivo')(value)}
-                      className={`py-2.5 px-3 rounded-lg text-sm font-medium border transition-colors ${
-                        form.objetivo === value
-                          ? 'bg-nutri-primary text-white border-nutri-primary'
-                          : 'border-nutri-gray-200 text-nutri-gray-700 hover:border-nutri-gray-300'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-nutri-gray-700">Fumador/a</label>
+                <button
+                  type="button"
+                  onClick={() => set('fumador')(!form.fumador)}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${form.fumador ? 'bg-nutri-secondary' : 'bg-nutri-gray-300'}`}
+                >
+                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.fumador ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                </button>
               </div>
+            </div>
+          </section>
+
+          {/* Antecedentes familiares */}
+          <section>
+            <h2 className="font-semibold text-nutri-gray-900 mb-4 pb-2 border-b border-nutri-gray-100">
+              Antecedentes Familiares
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {antecedentesLabels.map(({ key, label }) => (
+                <label key={key} className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.antecedentes_familiares[key]}
+                    onChange={(e) =>
+                      set('antecedentes_familiares')({
+                        ...form.antecedentes_familiares,
+                        [key]: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 text-nutri-primary border-nutri-gray-300 rounded focus:ring-nutri-primary"
+                  />
+                  <span className="text-sm text-nutri-gray-700">{label}</span>
+                </label>
+              ))}
             </div>
           </section>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full py-3 bg-nutri-primary text-white rounded-lg font-semibold hover:bg-nutri-primary-dark transition-colors flex items-center justify-center space-x-2"
+            disabled={saving}
+            className="w-full py-3 bg-nutri-primary text-white rounded-lg font-semibold hover:bg-nutri-primary-dark transition-colors flex items-center justify-center space-x-2 disabled:opacity-60"
           >
-            {guardado ? (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                <span>Guardado</span>
-              </>
+            {saving ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : guardado ? (
+              <><CheckCircle className="w-5 h-5" /><span>Guardado</span></>
             ) : (
-              <>
-                <Save className="w-5 h-5" />
-                <span>Guardar Perfil</span>
-              </>
+              <><Save className="w-5 h-5" /><span>Guardar Perfil</span></>
             )}
           </button>
         </form>

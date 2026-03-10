@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -24,12 +25,13 @@ const navItems = [
 
 interface SidebarContentProps {
   pathname: string;
-  user: { nombre?: string; email?: string };
+  displayName: string;
+  email: string;
   onLogout: () => void;
   onClose?: () => void;
 }
 
-function SidebarContent({ pathname, user, onLogout, onClose }: SidebarContentProps) {
+function SidebarContent({ pathname, displayName, email, onLogout, onClose }: SidebarContentProps) {
   return (
     <>
       <div className="flex items-center justify-between px-6 py-5 border-b border-nutri-gray-200 flex-shrink-0">
@@ -65,23 +67,21 @@ function SidebarContent({ pathname, user, onLogout, onClose }: SidebarContentPro
                   : 'text-nutri-gray-700 hover:bg-nutri-gray-100'
               }`}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              <Icon className="w-5 h-5 shrink-0" />
               <span>{label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-nutri-gray-200 flex-shrink-0">
+      <div className="p-4 border-t border-nutri-gray-200 shrink-0">
         <div className="flex items-center space-x-3 px-3 py-2 mb-1">
-          <div className="w-8 h-8 rounded-full bg-nutri-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-            {(user.nombre || user.email || 'U')[0].toUpperCase()}
+          <div className="w-8 h-8 rounded-full bg-nutri-primary flex items-center justify-center text-white text-sm font-semibold shrink-0">
+            {(displayName || 'U')[0].toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-nutri-gray-900 truncate">
-              {user.nombre || 'Usuario'}
-            </p>
-            <p className="text-xs text-nutri-gray-500 truncate">{user.email || ''}</p>
+            <p className="text-sm font-medium text-nutri-gray-900 truncate">{displayName}</p>
+            <p className="text-xs text-nutri-gray-500 truncate">{email}</p>
           </div>
         </div>
         <button
@@ -100,12 +100,10 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const user: { nombre?: string; email?: string } = JSON.parse(
-    localStorage.getItem('user') || '{}'
-  );
+  const { displayName, user, signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await signOut();
     navigate('/login');
   };
 
@@ -115,7 +113,8 @@ export default function Layout() {
       <aside className="hidden md:flex flex-col w-64 flex-shrink-0 bg-white border-r border-nutri-gray-200">
         <SidebarContent
           pathname={location.pathname}
-          user={user}
+          displayName={displayName}
+          email={user?.email ?? ''}
           onLogout={handleLogout}
         />
       </aside>
@@ -130,7 +129,8 @@ export default function Layout() {
           <aside className="fixed inset-y-0 left-0 z-50 flex flex-col w-72 bg-white border-r border-nutri-gray-200 md:hidden">
             <SidebarContent
               pathname={location.pathname}
-              user={user}
+              displayName={displayName}
+              email={user?.email ?? ''}
               onLogout={handleLogout}
               onClose={() => setMobileOpen(false)}
             />

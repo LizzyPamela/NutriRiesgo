@@ -1,44 +1,117 @@
-const semana = [
-  { day: 'Lun', kcal: 1800 },
-  { day: 'Mar', kcal: 2100 },
-  { day: 'Mie', kcal: 1650 },
-  { day: 'Jue', kcal: 2300 },
-  { day: 'Vie', kcal: 1950 },
-  { day: 'Sab', kcal: 2400 },
-  { day: 'Dom', kcal: 1840 },
-];
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { obtenerDiarioAlimentario, obtenerPerfil } from '../services/api';
 
-const macros = [
-  { label: 'Carbohidratos', pct: 55, color: 'bg-nutri-info', grams: '242 g' },
-  { label: 'Grasas', pct: 30, color: 'bg-nutri-accent', grams: '66 g' },
-  { label: 'Proteínas', pct: 15, color: 'bg-nutri-success', grams: '68 g' },
-];
+interface RegistroComida {
+  fecha: string;
+  total_calorias: number;
+  total_proteina_g: number;
+  total_carbohidratos_g: number;
+  total_grasas_g: number;
+}
 
-const nutrientes = [
-  { label: 'Calcio', pct: 78, detalle: '936 mg / 1200 mg', color: 'bg-nutri-primary' },
-  { label: 'Hierro', pct: 60, detalle: '10.8 mg / 18 mg', color: 'bg-nutri-secondary' },
-  { label: 'Vitamina C', pct: 90, detalle: '81 mg / 90 mg', color: 'bg-nutri-success' },
-  { label: 'Fibra', pct: 45, detalle: '11.3 g / 25 g', color: 'bg-nutri-accent' },
-  { label: 'Sodio', pct: 110, detalle: '2640 mg / 2400 mg (exceso)', color: 'bg-nutri-secondary' },
-];
+interface DiaStats {
+  day: string;
+  fecha: string;
+  kcal: number;
+}
 
-const resumen = [
-  { label: 'Promedio calórico diario', value: '2,006 kcal' },
-  { label: 'Días sobre el objetivo', value: '2 de 7' },
-  { label: 'Mejor día', value: 'Viernes' },
-  { label: 'Riesgo cardiovascular estimado', value: 'Bajo' },
-  { label: 'IMC actual', value: '23.4 (Normal)' },
-];
+const META_KCAL = 2200;
 
-const maxKcal = Math.max(...semana.map((d) => d.kcal));
+// Últimos 7 días
+function ultimos7Dias(): { day: string; fecha: string }[] {
+  const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      day: dias[d.getDay()],
+      fecha: d.toISOString().split('T')[0],
+    };
+  });
+}
 
 export default function Estadisticas() {
+  const { userId } = useAuth();
+  const [registros, setRegistros] = useState<RegistroComida[]>([]);
+  const [perfil, setPerfil] = useState<{ imc?: number; categoria_riesgo?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    Promise.allSettled([
+      obtenerDiarioAlimentario(userId),
+      obtenerPerfil(userId),
+    ]).then(([diarioRes, perfilRes]) => {
+      if (diarioRes.status === 'fulfilled') setRegistros(diarioRes.value?.registros ?? []);
+      if (perfilRes.status === 'fulfilled') setPerfil(perfilRes.value);
+    }).finally(() => setLoading(false));
+  }, [userId]);
+
+  const semanaBase = ultimos7Dias();
+
+  // Agrupar calorías por día
+  const semana: DiaStats[] = semanaBase.map(({ day, fecha }) => {
+    const kcal = registros
+      .filter((r) => r.fecha?.startsWith(fecha))
+      .reduce((acc, r) => acc + (r.total_calorias ?? 0), 0);
+    return { day, fecha, kcal };
+  });
+
+  const maxKcal = Math.max(...semana.map((d) => d.kcal), META_KCAL);
+
+  // Totales últimos 7 días
+  const registros7 = registros.filter((r) =>
+    semanaBase.some((d) => r.fecha?.startsWith(d.fecha))
+  );
+  const totalKcal7 = registros7.reduce((a, r) => a + (r.total_calorias ?? 0), 0);
+  const totalProt7 = registros7.reduce((a, r) => a + (r.total_proteina_g ?? 0), 0);
+  const totalCarbs7 = registros7.reduce((a, r) => a + (r.total_carbohidratos_g ?? 0), 0);
+  const totalGrasas7 = registros7.reduce((a, r) => a + (r.total_grasas_g ?? 0), 0);
+  const diasConDatos = semana.filter((d) => d.kcal > 0).length;
+  const promedioKcal = diasConDatos > 0 ? totalKcal7 / diasConDatos : 0;
+  const diasSobreObjetivo = semana.filter((d) => d.kcal > META_KCAL).length;
+
+  // Distribución de macros (sobre totales)
+  const totalMacros = totalProt7 * 4 + totalCarbs7 * 4 + totalGrasas7 * 9;
+  const macros =
+    totalMacros > 0
+      ? [
+          { label: 'Carbohidratos', pct: Math.round((totalCarbs7 * 4 / totalMacros) * 100), color: 'bg-nutri-info', grams: `${totalCarbs7.toFixed(0)} g` },
+          { label: 'Grasas', pct: Math.round((totalGrasas7 * 9 / totalMacros) * 100), color: 'bg-nutri-accent', grams: `${totalGrasas7.toFixed(0)} g` },
+          { label: 'Proteínas', pct: Math.round((totalProt7 * 4 / totalMacros) * 100), color: 'bg-nutri-success', grams: `${totalProt7.toFixed(0)} g` },
+        ]
+      : [
+          { label: 'Carbohidratos', pct: 55, color: 'bg-nutri-info', grams: '— g' },
+          { label: 'Grasas', pct: 30, color: 'bg-nutri-accent', grams: '— g' },
+          { label: 'Proteínas', pct: 15, color: 'bg-nutri-success', grams: '— g' },
+        ];
+
+  const resumen = [
+    { label: 'Promedio calórico diario', value: diasConDatos > 0 ? `${promedioKcal.toFixed(0)} kcal` : 'Sin datos' },
+    { label: 'Días con registros', value: `${diasConDatos} de 7` },
+    { label: 'Días sobre objetivo', value: `${diasSobreObjetivo} de 7` },
+    { label: 'IMC actual', value: perfil?.imc ? `${perfil.imc.toFixed(1)} (${perfil.categoria_riesgo ?? 'ver perfil'})` : 'Completa tu perfil' },
+    { label: 'Proteínas (7 días)', value: `${totalProt7.toFixed(0)} g total` },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-nutri-primary animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-nutri-gray-900">Estadísticas</h1>
-          <p className="text-nutri-gray-600 text-sm mt-1">Resumen de los últimos 7 días (datos demo)</p>
+          <p className="text-nutri-gray-600 text-sm mt-1">
+            Últimos 7 días &middot; {diasConDatos > 0 ? 'Datos reales de tu diario' : 'Registra comidas para ver estadísticas'}
+          </p>
         </div>
 
         {/* Calorías Semanales */}
@@ -51,8 +124,8 @@ export default function Estadisticas() {
                 <span>Consumido</span>
               </span>
               <span className="flex items-center space-x-1.5">
-                <span className="w-4 h-px bg-nutri-gray-400 inline-block border-t border-dashed border-nutri-gray-400" />
-                <span>Objetivo 2200</span>
+                <span className="w-3 h-3 rounded bg-nutri-secondary inline-block" />
+                <span>Sobre objetivo</span>
               </span>
             </div>
           </div>
@@ -60,15 +133,17 @@ export default function Estadisticas() {
             {semana.map(({ day, kcal }) => (
               <div key={day} className="flex-1 flex flex-col items-center justify-end h-full">
                 <div className="w-full flex flex-col justify-end" style={{ height: '100px' }}>
-                  <div
-                    className={`w-full rounded-t-md transition-all ${
-                      kcal > 2200 ? 'bg-nutri-secondary' : 'bg-nutri-primary'
-                    }`}
-                    style={{ height: `${(kcal / maxKcal) * 100}px` }}
-                  />
+                  {kcal > 0 ? (
+                    <div
+                      className={`w-full rounded-t-md transition-all ${kcal > META_KCAL ? 'bg-nutri-secondary' : 'bg-nutri-primary'}`}
+                      style={{ height: `${(kcal / maxKcal) * 100}px` }}
+                    />
+                  ) : (
+                    <div className="w-full rounded-t-md bg-nutri-gray-100" style={{ height: '4px' }} />
+                  )}
                 </div>
                 <p className="text-xs font-medium text-nutri-gray-700 mt-2">{day}</p>
-                <p className="text-xs text-nutri-gray-400">{kcal}</p>
+                <p className="text-xs text-nutri-gray-400">{kcal > 0 ? kcal.toFixed(0) : '—'}</p>
               </div>
             ))}
           </div>
@@ -102,6 +177,11 @@ export default function Estadisticas() {
                 </div>
               ))}
             </div>
+            {totalMacros === 0 && (
+              <p className="text-xs text-nutri-gray-400 mt-4 text-center">
+                Registra comidas para ver tu distribución real
+              </p>
+            )}
           </div>
 
           {/* Resumen */}
@@ -121,38 +201,15 @@ export default function Estadisticas() {
           </div>
         </div>
 
-        {/* Micronutrientes */}
-        <div className="bg-white rounded-2xl border border-nutri-gray-200 p-6 shadow-sm">
-          <h2 className="font-semibold text-nutri-gray-900 mb-5">
-            Micronutrientes (promedio diario)
-          </h2>
-          <div className="space-y-5">
-            {nutrientes.map(({ label, pct, detalle, color }) => (
-              <div key={label}>
-                <div className="flex justify-between text-sm mb-1.5">
-                  <span className="text-nutri-gray-700">{label}</span>
-                  <span
-                    className={`font-medium ${
-                      pct > 100 ? 'text-nutri-secondary' : 'text-nutri-gray-900'
-                    }`}
-                  >
-                    {pct}%
-                  </span>
-                </div>
-                <div className="h-2 bg-nutri-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${color}`}
-                    style={{ width: `${Math.min(pct, 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-nutri-gray-400 mt-1">{detalle}</p>
-              </div>
-            ))}
+        {/* Estado vacío */}
+        {diasConDatos === 0 && (
+          <div className="bg-nutri-gray-50 rounded-2xl border border-nutri-gray-200 p-8 text-center">
+            <p className="text-nutri-gray-600 font-medium mb-1">Sin datos suficientes</p>
+            <p className="text-sm text-nutri-gray-400">
+              Ve al Diario Alimentario y registra tus comidas para ver estadísticas detalladas aquí.
+            </p>
           </div>
-          <p className="text-xs text-nutri-gray-400 mt-6 text-center">
-            Datos de demostración. Próximamente: análisis basado en tu diario real.
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
