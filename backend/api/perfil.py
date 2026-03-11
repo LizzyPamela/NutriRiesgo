@@ -2,6 +2,8 @@
 Endpoints para gestión de perfil de usuario
 """
 
+import os
+import requests
 from fastapi import APIRouter, HTTPException, status
 from typing import Optional
 import psycopg2.extras
@@ -70,5 +72,49 @@ async def eliminar_perfil(user_id: str):
         with get_db_cursor() as cur:
             cur.execute("DELETE FROM perfiles_usuarios WHERE user_id = %s", (user_id,))
         return {"message": "Perfil eliminado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{user_id}/cuenta", summary="Eliminar cuenta completa (perfil + auth)")
+async def eliminar_cuenta(user_id: str):
+    """
+    Elimina todos los datos del usuario y su cuenta de autenticación.
+    Requiere SUPABASE_SERVICE_KEY en el entorno.
+    """
+    try:
+        # 1. Eliminar datos de perfil y comidas en la BD
+        with get_db_cursor() as cur:
+            cur.execute("DELETE FROM registros_comidas WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM perfiles_usuarios WHERE user_id = %s", (user_id,))
+
+        # 2. Eliminar usuario en Supabase Auth via Admin API
+        supabase_url = os.getenv("SUPABASE_URL", "")
+        service_key = os.getenv("SUPABASE_SERVICE_KEY", "")
+
+        if not supabase_url or not service_key:
+            raise HTTPException(
+                status_code=500,
+                detail="Configuración de Supabase incompleta en el servidor"
+            )
+
+        resp = requests.delete(
+            f"{supabase_url}/auth/v1/admin/users/{user_id}",
+            headers={
+                "apikey": service_key,
+                "Authorization": f"Bearer {service_key}",
+            },
+            timeout=10,
+        )
+
+        if resp.status_code not in (200, 204):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error al eliminar usuario de Auth: {resp.text}"
+            )
+
+        return {"message": "Cuenta eliminada correctamente"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

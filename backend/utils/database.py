@@ -106,24 +106,37 @@ def buscar_alimentos(
     limite: int = 10
 ) -> List[Dict[str, Any]]:
     """
-    Busca alimentos usando búsqueda de texto completo
-    
-    Args:
-        termino: Término de búsqueda
-        filtro_categoria: Filtrar por categoría
-        solo_hondurenos: Solo alimentos hondureños/INCAP
-        limite: Número máximo de resultados
-    
-    Returns:
-        Lista de alimentos
+    Busca alimentos usando búsqueda ILIKE directa sobre la tabla alimentos.
     """
     with get_db_cursor() as cur:
-        # Supabase function signature: (termino text, filtro_categoria text, solo_hondurenos boolean)
-        # limite is applied via LIMIT in a wrapper query
-        cur.execute("""
-            SELECT * FROM buscar_alimentos(%s::text, %s::text, %s::boolean)
+        condiciones = ["nombre ILIKE %s"]
+        params: List[Any] = [f"%{termino}%"]
+
+        if filtro_categoria:
+            condiciones.append("categoria = %s")
+            params.append(filtro_categoria)
+
+        if solo_hondurenos:
+            condiciones.append("es_alimento_hondureno = true")
+
+        where = " AND ".join(condiciones)
+        params.append(limite)
+
+        cur.execute(f"""
+            SELECT
+                id, nombre, categoria, fuente,
+                COALESCE(es_alimento_hondureno, false) AS es_alimento_hondureno,
+                energia_kcal, proteina_g, grasa_g, carbohidratos_g,
+                fibra_g, calcio_mg, hierro_mg, sodio_mg,
+                vitamina_c_mg, completitud_datos
+            FROM alimentos
+            WHERE {where}
+            ORDER BY
+                COALESCE(es_alimento_hondureno, false) DESC,
+                COALESCE(completitud_datos, 0) DESC,
+                nombre ASC
             LIMIT %s
-        """, (termino, filtro_categoria, solo_hondurenos, limite))
+        """, params)
 
         return cur.fetchall()
 

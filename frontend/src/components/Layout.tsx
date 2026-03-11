@@ -14,6 +14,7 @@ import {
   X,
   Lightbulb,
   FlaskConical,
+  Info,
 } from 'lucide-react';
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { path: '/estadisticas',    label: 'Estadísticas',      icon: BarChart3 },
   { path: '/alimentos',       label: 'Alimentos',         icon: Search },
   { path: '/perfil',          label: 'Perfil',            icon: User },
+  { path: '/acerca-de',       label: 'Acerca de',         icon: Info },
 ];
 
 interface SidebarContentProps {
@@ -165,7 +167,7 @@ export default function Layout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-y-auto">
           <Outlet />
         </main>
       </div>

@@ -11,6 +11,8 @@ import Estadisticas from './pages/Estadisticas';
 import Perfil from './pages/Perfil';
 import Recomendaciones from './pages/Recomendaciones';
 import ExamenesMedicos from './pages/ExamenesMedicos';
+import RegistroExitoso from './pages/RegistroExitoso';
+import AcercaDe from './pages/AcercaDe';
 
 function PrivateRoute() {
   const { session, loading } = useAuth();
@@ -31,6 +33,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/registro-exitoso" element={<RegistroExitoso />} />
       <Route path="/registro" element={<Navigate to="/login" replace />} />
       <Route element={<PrivateRoute />}>
         <Route element={<Layout />}>
@@ -42,6 +45,7 @@ function AppRoutes() {
           <Route path="/alimentos"       element={<BusquedaAlimentos />} />
           <Route path="/recomendaciones" element={<Recomendaciones />} />
           <Route path="/examenes"        element={<ExamenesMedicos />} />
+          <Route path="/acerca-de"       element={<AcercaDe />} />
         </Route>
       </Route>
     </Routes>

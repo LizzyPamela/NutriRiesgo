@@ -10,6 +10,7 @@ const BusquedaAlimentos = () => {
   const [resultados, setResultados] = useState<Alimento[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [totalEncontrados, setTotalEncontrados] = useState(0);
+  const [errorBusqueda, setErrorBusqueda] = useState('');
   const [alimentoSeleccionado, setAlimentoSeleccionado] = useState<Alimento | null>(null);
 
   const categorias = [
@@ -30,6 +31,7 @@ const BusquedaAlimentos = () => {
     if (!termino.trim()) return;
 
     setIsLoading(true);
+    setErrorBusqueda('');
     try {
       const data = await buscarAlimentos(
         termino,
@@ -37,10 +39,13 @@ const BusquedaAlimentos = () => {
         soloHondurenos,
         20
       );
-      setResultados(data.alimentos);
-      setTotalEncontrados(data.total_encontrados);
-    } catch (error) {
+      setResultados(data.alimentos ?? []);
+      setTotalEncontrados(data.total_encontrados ?? data.alimentos?.length ?? 0);
+    } catch (error: unknown) {
       console.error('Error al buscar:', error);
+      const axiosErr = error as { response?: { data?: { detail?: string } }; message?: string };
+      const msg = axiosErr?.response?.data?.detail ?? axiosErr?.message ?? 'Error al conectar con el servidor';
+      setErrorBusqueda(msg);
       setResultados([]);
       setTotalEncontrados(0);
     } finally {
@@ -54,15 +59,16 @@ const BusquedaAlimentos = () => {
     setSoloHondurenos(false);
     setResultados([]);
     setTotalEncontrados(0);
+    setErrorBusqueda('');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-nutri-gray-50 to-white p-6">
+    <div className="bg-gradient-to-b from-nutri-gray-50 to-white p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-nutri-primary mb-2">
-            🥗 Búsqueda de Alimentos
+            Búsqueda de Alimentos
           </h1>
           <p className="text-nutri-gray-600">
             Explora nuestra base de datos con más de 92,000 alimentos
@@ -155,6 +161,13 @@ const BusquedaAlimentos = () => {
             </div>
           </div>
         </form>
+
+        {/* Error */}
+        {errorBusqueda && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-4 text-sm">
+            <strong>Error:</strong> {errorBusqueda}
+          </div>
+        )}
 
         {/* Resultados */}
         {totalEncontrados > 0 && (

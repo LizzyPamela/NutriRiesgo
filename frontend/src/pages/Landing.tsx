@@ -1,4 +1,4 @@
-import { Heart, ArrowRight, MessageSquare, BarChart3, Calendar, User } from 'lucide-react';
+import { Heart, ArrowRight, MessageSquare, BarChart3, Calendar, User, Mail, Phone, GraduationCap } from 'lucide-react';
 
 const Landing = () => {
   const handleNavigation = (path: string) => {
@@ -155,49 +155,90 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-nutri-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
+      <footer className="bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="grid md:grid-cols-3 gap-10">
+
+            {/* Columna 1 — Marca */}
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Heart className="w-6 h-6 text-nutri-secondary fill-nutri-secondary" />
-                <span className="text-xl font-bold">NutriRiesgo</span>
+              <div className="flex items-center space-x-2.5 mb-4">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10">
+                  <Heart className="w-5 h-5 text-emerald-400 fill-emerald-400" />
+                </div>
+                <span className="text-xl font-bold text-white tracking-tight">NutriRiesgo</span>
               </div>
-              <p className="text-nutri-gray-400 text-sm">
-                Plataforma de orientación nutricional impulsada por IA para estudiantes UNAH
+              <p className="text-gray-400 text-sm leading-relaxed mb-5">
+                Plataforma de orientación nutricional impulsada por IA para estudiantes
+                de la UNAH Comayagua.
               </p>
+              <div className="flex items-start space-x-2 text-xs text-gray-500">
+                <GraduationCap className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-500" />
+                <span>Universidad Nacional Autónoma de Honduras · CURC Comayagua · 2026</span>
+              </div>
             </div>
+
+            {/* Columna 2 — Accesos */}
             <div>
-              <h3 className="font-semibold mb-4">Enlaces</h3>
-              <ul className="space-y-2 text-sm text-nutri-gray-400">
-                <li>
-                  <button onClick={() => handleNavigation('/chat')} className="hover:text-white transition-colors">
-                    Chat
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigation('/alimentos')} className="hover:text-white transition-colors">
-                    Alimentos
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => handleNavigation('/estadisticas')} className="hover:text-white transition-colors">
-                    Estadísticas
-                  </button>
-                </li>
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-5">
+                Accesos rápidos
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  { label: 'Chat con IA',    path: '/chat' },
+                  { label: 'Alimentos',      path: '/alimentos' },
+                  { label: 'Estadísticas',   path: '/estadisticas' },
+                  { label: 'Iniciar sesión', path: '/login' },
+                ].map(({ label, path }) => (
+                  <li key={path}>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigation(path)}
+                      className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
+                    >
+                      <span className="w-1 h-1 rounded-full bg-emerald-500 shrink-0" />
+                      <span>{label}</span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
+
+            {/* Columna 3 — Desarrolladora */}
             <div>
-              <h3 className="font-semibold mb-4">Contacto</h3>
-              <p className="text-sm text-nutri-gray-400">
-                +504 9681-3882<br />
-                UNAH Comayagua<br />
-                Solo fines de investigación
-              </p>
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-5">
+                Desarrolladora
+              </h3>
+              <p className="text-white font-semibold text-sm mb-4">Lizzy Pamela Mejía Mejía</p>
+              <div className="space-y-3">
+                <a
+                  href="mailto:bylizzymejia@gmail.com"
+                  className="flex items-center space-x-3 text-sm text-gray-400 hover:text-white transition-colors group"
+                >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-white/6 group-hover:bg-white/10 transition-colors">
+                    <Mail className="w-3.5 h-3.5" />
+                  </div>
+                  <span>bylizzymejia@gmail.com</span>
+                </a>
+                <a
+                  href="tel:+50488145882"
+                  className="flex items-center space-x-3 text-sm text-gray-400 hover:text-white transition-colors group"
+                >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-white/6 group-hover:bg-white/10 transition-colors">
+                    <Phone className="w-3.5 h-3.5" />
+                  </div>
+                  <span>+504 8814-5882</span>
+                </a>
+              </div>
             </div>
+
           </div>
-          <div className="border-t border-nutri-gray-800 mt-8 pt-8 text-center text-sm text-nutri-gray-400">
-            © 2026 NutriRiesgo-UNAH. Universidad Nacional Autónoma de Honduras
+
+          {/* Bottom bar */}
+          <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs text-gray-500">
+              © 2026 NutriRiesgo-UNAH · Universidad Nacional Autónoma de Honduras
+            </p>
+            <p className="text-xs text-gray-600">Solo fines de investigación académica</p>
           </div>
         </div>
       </footer>

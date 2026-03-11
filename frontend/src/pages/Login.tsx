@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import {
   Heart, Mail, Lock, User, ArrowRight, ArrowLeft,
-  AlertCircle, Scale, Ruler, Activity
+  AlertCircle, Scale, Ruler, Activity,
+  Moon, Sun, Flame, Zap, type LucideIcon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+
+const DOMINIOS_UNAH = ['@unah.hn', '@unah.edu.hn'];
+const esEmailInstitucional = (email: string) =>
+  DOMINIOS_UNAH.some(d => email.toLowerCase().endsWith(d));
 
 // ── Registration data shape ──────────────────────────────────────────────────
 interface RegData {
@@ -31,12 +36,12 @@ const defaultReg: RegData = {
   tiene_dislipidemia: false, antecedentes_cardiovasculares: false,
 };
 
-const nivelesActividad = [
-  { value: 'sedentario', label: 'Sedentario', desc: 'Sin ejercicio regular', emoji: '🪑' },
-  { value: 'ligero',     label: 'Ligero',     desc: '1-3 días/semana',       emoji: '🚶' },
-  { value: 'moderado',  label: 'Moderado',   desc: '3-5 días/semana',       emoji: '🚴' },
-  { value: 'activo',    label: 'Activo',     desc: '6-7 días/semana',       emoji: '🏃' },
-  { value: 'muy_activo',label: 'Muy activo', desc: 'Ejercicio intenso diario', emoji: '⚡' },
+const nivelesActividad: { value: string; label: string; desc: string; icon: LucideIcon }[] = [
+  { value: 'sedentario', label: 'Sedentario', desc: 'Sin ejercicio regular',    icon: Moon },
+  { value: 'ligero',     label: 'Ligero',     desc: '1-3 días/semana',          icon: Sun },
+  { value: 'moderado',  label: 'Moderado',   desc: '3-5 días/semana',          icon: Activity },
+  { value: 'activo',    label: 'Activo',     desc: '6-7 días/semana',          icon: Flame },
+  { value: 'muy_activo',label: 'Muy activo', desc: 'Ejercicio intenso diario', icon: Zap },
 ];
 
 const condicionesSalud = [
@@ -114,7 +119,6 @@ const Login = () => {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [confirmado, setConfirmado] = useState(false);
   const navigate = useNavigate();
 
   // ── Login submit ────────────────────────────────────────────────────────
@@ -141,6 +145,7 @@ const Login = () => {
     if (step === 1) {
       if (!reg.nombre.trim()) return 'Ingresa tu nombre.';
       if (!reg.email.includes('@')) return 'Correo electrónico inválido.';
+      if (!esEmailInstitucional(reg.email)) return 'Debes usar tu correo institucional (@unah.hn o @unah.edu.hn).';
       if (reg.password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
     }
     if (step === 2) {
@@ -189,7 +194,7 @@ const Login = () => {
         },
       });
       if (error) throw error;
-      setConfirmado(true);
+      navigate('/registro-exitoso');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al registrarse';
       if (msg.includes('User already registered')) setError('Ya existe una cuenta con este correo.');
@@ -211,33 +216,6 @@ const Login = () => {
     setStep(1);
     setError('');
   };
-
-  // ── Confirmation screen ─────────────────────────────────────────────────
-  if (confirmado) {
-    return (
-      <div className="min-h-screen bg-linear-to-br from-nutri-primary/5 via-white to-nutri-secondary/5 flex items-center justify-center p-4">
-        <div className="w-full max-w-md text-center bg-white rounded-2xl shadow-xl p-8">
-          <div className="w-16 h-16 bg-nutri-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-8 h-8 text-nutri-success" />
-          </div>
-          <h2 className="text-2xl font-bold text-nutri-gray-900 mb-2">Cuenta creada</h2>
-          <p className="text-nutri-gray-600 mb-2">
-            Revisa tu correo <strong>{reg.email}</strong> para confirmar tu cuenta.
-          </p>
-          <p className="text-sm text-nutri-gray-500 mb-6">
-            Tu perfil nutricional se guardará automáticamente la primera vez que inicies sesión.
-          </p>
-          <button
-            type="button"
-            onClick={switchToLogin}
-            className="px-6 py-3 bg-nutri-primary text-white rounded-lg font-medium hover:bg-nutri-primary-dark transition-colors"
-          >
-            Ir a Iniciar Sesión
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const imc = calcIMC(reg.peso_kg, reg.altura_cm);
 
@@ -339,15 +317,21 @@ const Login = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Correo Electrónico</label>
+                    <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Correo Institucional UNAH</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nutri-gray-400" />
                       <input
                         type="email" value={reg.email} onChange={(e) => updateReg('email', e.target.value)}
-                        placeholder="tu@email.com"
+                        placeholder="tu.nombre@unah.hn"
                         className="w-full pl-9 pr-4 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none"
                       />
                     </div>
+                    {reg.email.includes('@') && !esEmailInstitucional(reg.email) && (
+                      <p className="text-xs text-red-500 mt-1 flex items-center space-x-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        <span>Usa tu correo @unah.hn o @unah.edu.hn</span>
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Contraseña</label>
@@ -469,7 +453,7 @@ const Login = () => {
                     <Activity className="inline w-4 h-4 mr-1.5" />Paso 3 de 4 — Actividad física
                   </p>
                   <div className="space-y-2">
-                    {nivelesActividad.map(({ value, label, desc, emoji }) => (
+                    {nivelesActividad.map(({ value, label, desc, icon: Icon }) => (
                       <button
                         key={value} type="button" onClick={() => updateReg('nivel_actividad', value)}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl border text-left transition-all ${
@@ -478,7 +462,7 @@ const Login = () => {
                             : 'border-nutri-gray-200 bg-white hover:border-nutri-gray-300 text-nutri-gray-700'
                         }`}
                       >
-                        <span className="text-xl">{emoji}</span>
+                        <Icon className="w-5 h-5 shrink-0" />
                         <div>
                           <p className="text-sm font-semibold">{label}</p>
                           <p className="text-xs text-nutri-gray-500">{desc}</p>

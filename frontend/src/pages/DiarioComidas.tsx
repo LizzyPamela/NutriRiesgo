@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Loader2, Coffee, Sun, Moon, Apple } from 'lucide-react';
+import { fechaHoyHonduras } from '../utils/fecha';
 import type { LucideIcon } from 'lucide-react';
 import type { Alimento } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -57,7 +58,7 @@ function calcularNutrientes(alimentos: AlimentoSeleccionado[]) {
 
 export default function DiarioComidas() {
   const { userId } = useAuth();
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = fechaHoyHonduras();
 
   const [fecha, setFecha] = useState(hoy);
   const [activeTab, setActiveTab] = useState<TiempoComida>('desayuno');

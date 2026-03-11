@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fechaHoyHonduras, horaHonduras } from '../utils/fecha';
 import {
   MessageSquare, Calendar, BarChart3, Search,
   Flame, Activity, TrendingUp, AlertCircle,
@@ -62,9 +63,9 @@ export default function Dashboard() {
   const [comidasHoy, setComidasHoy]     = useState<RegistroComida[]>([]);
   const [loadingPerfil, setLoadingPerfil] = useState(true);
 
-  const hora   = new Date().getHours();
+  const hora   = horaHonduras();
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
-  const hoy    = new Date().toISOString().split('T')[0];
+  const hoy    = fechaHoyHonduras();
 
   useEffect(() => {
     if (!userId) return;

@@ -67,6 +67,7 @@ async def buscar(request: BusquedaAlimentosRequest):
                 calcio_mg=r.get('calcio_mg'),
                 hierro_mg=r.get('hierro_mg'),
                 sodio_mg=r.get('sodio_mg'),
+                vitamina_c_mg=r.get('vitamina_c_mg'),
                 completitud_datos=r.get('completitud_datos')
             )
             for r in resultados

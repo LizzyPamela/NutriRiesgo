@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Save, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { Save, CheckCircle, Loader2, AlertCircle, Trash2, TriangleAlert } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { obtenerPerfil, crearOActualizarPerfil } from '../services/api';
+import { obtenerPerfil, crearOActualizarPerfil, eliminarCuenta } from '../services/api';
 
 // Tipos alineados con el backend (perfil.py)
 type Sexo = 'M' | 'F' | '';
@@ -73,13 +74,20 @@ const defaultForm: PerfilForm = {
 };
 
 export default function Perfil() {
-  const { userId, displayName, user } = useAuth();
+  const { userId, displayName, user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState<PerfilForm>({ ...defaultForm, nombre: displayName });
   const [guardado, setGuardado] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [perfilBackend, setPerfilBackend] = useState<{ imc?: number; categoria_riesgo?: string; riesgo_prevent?: number } | null>(null);
+
+  // Eliminación de cuenta
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteInput, setDeleteInput] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Cargar perfil existente del backend
   useEffect(() => {
@@ -138,6 +146,20 @@ export default function Perfil() {
       setError('Error al guardar. Verifica tu conexión con el servidor.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!userId) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await eliminarCuenta(userId);
+      await signOut();
+      navigate('/login');
+    } catch {
+      setDeleteError('No se pudo eliminar la cuenta. Inténtalo de nuevo.');
+      setDeleting(false);
     }
   };
 
@@ -339,6 +361,81 @@ export default function Perfil() {
             )}
           </button>
         </form>
+
+        {/* Zona de peligro */}
+        <div className="mt-8 border border-red-200 rounded-2xl overflow-hidden">
+          <div className="bg-red-50 px-6 py-4 flex items-center space-x-2">
+            <TriangleAlert className="w-4 h-4 text-red-600 shrink-0" />
+            <h2 className="text-sm font-semibold text-red-700">Zona de peligro</h2>
+          </div>
+
+          <div className="bg-white px-6 py-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-nutri-gray-900">Eliminar cuenta</p>
+                <p className="text-xs text-nutri-gray-500 mt-0.5">
+                  Elimina permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowDeleteConfirm(true); setDeleteInput(''); setDeleteError(''); }}
+                className="shrink-0 flex items-center space-x-1.5 px-4 py-2 bg-white border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Eliminar cuenta</span>
+              </button>
+            </div>
+
+            {/* Modal de confirmación inline */}
+            {showDeleteConfirm && (
+              <div className="mt-5 border border-red-200 rounded-xl p-5 bg-red-50 space-y-4">
+                <p className="text-sm text-red-800 font-medium">
+                  Esta acción eliminará tu cuenta, perfil y diario alimentario de forma permanente.
+                </p>
+                <p className="text-xs text-red-700">
+                  Escribe <span className="font-bold font-mono">ELIMINAR</span> para confirmar:
+                </p>
+                <input
+                  type="text"
+                  value={deleteInput}
+                  onChange={(e) => setDeleteInput(e.target.value)}
+                  placeholder="ELIMINAR"
+                  className="w-full px-4 py-2.5 border border-red-300 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:outline-none bg-white"
+                />
+                {deleteError && (
+                  <div className="flex items-center space-x-2 text-red-700 text-xs">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{deleteError}</span>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                    className="flex-1 py-2.5 border border-nutri-gray-200 text-nutri-gray-700 rounded-lg text-sm font-medium hover:bg-nutri-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAccount}
+                    disabled={deleteInput !== 'ELIMINAR' || deleting}
+                    className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-40 flex items-center justify-center space-x-2"
+                  >
+                    {deleting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <><Trash2 className="w-4 h-4" /><span>Eliminar mi cuenta</span></>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );

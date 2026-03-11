@@ -71,7 +71,7 @@ const Chat = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '❌ Lo siento, hubo un error al procesar tu consulta. Por favor, intenta de nuevo.',
+        content: 'Lo siento, hubo un error al procesar tu consulta. Por favor, intenta de nuevo.',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -91,9 +91,9 @@ const Chat = () => {
 
   const getConfianzaBadge = (nivel?: string) => {
     switch (nivel) {
-      case 'alto': return '✅ Alta confianza';
-      case 'medio': return '⚠️ Confianza media';
-      case 'bajo': return '⚠️ Baja confianza';
+      case 'alto': return 'Alta confianza';
+      case 'medio': return 'Confianza media';
+      case 'bajo': return 'Baja confianza';
       default: return null;
     }
   };

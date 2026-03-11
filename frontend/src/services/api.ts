@@ -87,6 +87,11 @@ export const eliminarPerfil = async (userId: string) => {
   return response.data;
 };
 
+export const eliminarCuenta = async (userId: string) => {
+  const response = await api.delete(`/perfil/${userId}/cuenta`);
+  return response.data;
+};
+
 // ============================================================================
 // COMIDAS (Para futuro)
 // ============================================================================

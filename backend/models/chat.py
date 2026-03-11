@@ -149,7 +149,8 @@ class AlimentoResponse(BaseModel):
     calcio_mg: Optional[float] = None
     hierro_mg: Optional[float] = None
     sodio_mg: Optional[float] = None
-    
+    vitamina_c_mg: Optional[float] = None
+
     completitud_datos: Optional[float] = Field(None, description="% de completitud de datos nutricionales")
     
     class Config:
