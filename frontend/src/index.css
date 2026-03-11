@@ -2,103 +2,198 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
 
 @theme {
-  /* Paleta Refinada: Menos saturación, más elegancia */
-  --color-nutri-dark: #1A1C1E;
-  --color-nutri-gray-body: #4A4D50;
-  --color-nutri-gray-light: #F8FAFC;
-  
-  /* Tus colores originales, pero balanceados */
-  --color-nutri-primary: #386641;       /* Verde más profundo y menos chillón */
-  --color-nutri-primary-soft: #F2F7F2;  /* Para fondos de tarjetas */
-  --color-nutri-accent-red: #BC4749;    /* Un rojo más terracota, menos neón */
-  
-  /* Tipografía Escalar (Previene que el texto explote) */
+  --color-nutri-primary: #386641;
+  --color-nutri-primary-soft: #F0F5F1;
+  --color-nutri-accent: #BC4749;
+  --color-nutri-dark: #111213;
+  --color-nutri-muted: #6B7280;
+  --color-nutri-border: #E5E7EB;
+  --color-nutri-surface: #FAFAFA;
+
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Poppins', sans-serif;
-  
-  /* Sombras y Bordes */
-  --shadow-subtle: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
-  --radius-custom: 1.25rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-pill: 9999px;
+
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* --- Reset y Mejoras de Lectura --- */
+/* ── Reset ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   font-family: var(--font-sans);
   background-color: #FFFFFF;
-  color: var(--color-nutri-gray-body);
-  line-height: 1.5;
+  color: var(--color-nutri-dark);
+  line-height: 1.6;
+  font-size: 1rem;
 }
 
-/* --- Jerarquía de Títulos (El problema de tu imagen) --- */
-h1 {
+/* ── Tipografía ──────────────────────────────────────── */
+h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 3.5rem); /* Se ajusta solo al tamaño de pantalla */
-  line-height: 1.1;
   color: var(--color-nutri-dark);
-  letter-spacing: -0.04em;
-  margin-bottom: 1rem;
-}
-
-h2 {
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  color: var(--color-nutri-dark);
+  line-height: 1.15;
   letter-spacing: -0.02em;
 }
 
-p {
-  font-size: 1.125rem;
-  max-width: 65ch; /* Evita que las líneas sean demasiado largas y cansen */
-  margin-inline: auto; /* Centra el texto de descripción */
+h1 { font-size: clamp(1.875rem, 4vw, 3rem); }
+h2 { font-size: clamp(1.375rem, 2.5vw, 2rem); }
+h3 { font-size: clamp(1.125rem, 2vw, 1.375rem); }
+
+p { color: var(--color-nutri-muted); line-height: 1.7; }
+
+/* ── Utilidades de layout ────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: 1140px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
 }
 
-/* --- Ajuste de Contenedores y Tarjetas --- */
-.card-grid {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  padding: 2rem 0;
+/* ── Tarjetas ────────────────────────────────────────── */
+.card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-nutri-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.feature-card {
-  background: var(--color-nutri-gray-light);
-  border: 1px solid rgba(0,0,0,0.03);
-  padding: 2rem;
-  border-radius: var(--radius-custom);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-subtle);
-  background: white;
+.card-surface {
+  background: var(--color-nutri-surface);
+  border: 1px solid var(--color-nutri-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
 }
 
-/* --- Botones y CTAs --- */
-.btn-primary {
-  background-color: var(--color-nutri-primary);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 99px;
-  font-weight: 600;
+/* ── Botones ─────────────────────────────────────────── */
+.btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: none;
+  outline: none;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-/* --- Footer / Sección Final (Mejorando ese bloque verde oscuro) --- */
-.cta-section {
-  background-color: var(--color-nutri-dark); /* Cambiado a gris muy oscuro para elegancia */
-  color: white;
-  padding: 4rem 2rem;
-  border-radius: var(--radius-custom);
-  text-align: center;
-  margin: 2rem;
+.btn:focus-visible {
+  outline: 2px solid var(--color-nutri-primary);
+  outline-offset: 2px;
 }
 
-.cta-section h2 { color: white; }
+.btn-primary {
+  background-color: var(--color-nutri-primary);
+  color: #FFFFFF;
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:active { filter: brightness(0.95); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-nutri-dark);
+  border: 1.5px solid var(--color-nutri-border);
+}
+.btn-outline:hover {
+  border-color: var(--color-nutri-primary);
+  color: var(--color-nutri-primary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-nutri-muted);
+}
+.btn-ghost:hover {
+  background: var(--color-nutri-surface);
+  color: var(--color-nutri-dark);
+}
+
+/* ── Inputs ──────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  font-family: var(--font-sans);
+  background: #FFFFFF;
+  border: 1.5px solid var(--color-nutri-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-nutri-dark);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.input::placeholder { color: #9CA3AF; }
+
+.input:focus {
+  border-color: var(--color-nutri-primary);
+  box-shadow: 0 0 0 3px rgba(56, 102, 65, 0.1);
+}
+
+/* ── Badges ──────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-primary {
+  background: var(--color-nutri-primary-soft);
+  color: var(--color-nutri-primary);
+}
+
+.badge-muted {
+  background: var(--color-nutri-surface);
+  color: var(--color-nutri-muted);
+  border: 1px solid var(--color-nutri-border);
+}
+
+/* ── Divisor ─────────────────────────────────────────── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--color-nutri-border);
+  margin: 1.5rem 0;
+}
+
+/* ── Scrollbar discreta ──────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+/* ── Selección de texto ──────────────────────────────── */
+::selection {
+  background: rgba(56, 102, 65, 0.15);
+  color: var(--color-nutri-dark);
+}
