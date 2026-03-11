@@ -12,15 +12,19 @@ import {
   Heart,
   Menu,
   X,
+  Lightbulb,
+  FlaskConical,
 } from 'lucide-react';
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/chat', label: 'Chat IA', icon: MessageSquare },
-  { path: '/diario', label: 'Diario', icon: Calendar },
-  { path: '/estadisticas', label: 'Estadísticas', icon: BarChart3 },
-  { path: '/alimentos', label: 'Alimentos', icon: Search },
-  { path: '/perfil', label: 'Perfil', icon: User },
+  { path: '/dashboard',       label: 'Dashboard',        icon: LayoutDashboard },
+  { path: '/chat',            label: 'Chat IA',           icon: MessageSquare },
+  { path: '/diario',          label: 'Diario',            icon: Calendar },
+  { path: '/recomendaciones', label: 'Recomendaciones',   icon: Lightbulb },
+  { path: '/examenes',        label: 'Exámenes',          icon: FlaskConical },
+  { path: '/estadisticas',    label: 'Estadísticas',      icon: BarChart3 },
+  { path: '/alimentos',       label: 'Alimentos',         icon: Search },
+  { path: '/perfil',          label: 'Perfil',            icon: User },
 ];
 
 interface SidebarContentProps {
@@ -45,10 +49,12 @@ function SidebarContent({ pathname, displayName, email, onLogout, onClose }: Sid
         </Link>
         {onClose && (
           <button
+            type="button"
+            aria-label="Cerrar menú"
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-nutri-gray-100 text-nutri-gray-500"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -85,6 +91,7 @@ function SidebarContent({ pathname, displayName, email, onLogout, onClose }: Sid
           </div>
         </div>
         <button
+          type="button"
           onClick={onLogout}
           className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-nutri-gray-700 hover:bg-nutri-gray-100 w-full transition-colors"
         >
@@ -143,10 +150,12 @@ export default function Layout() {
         {/* Mobile Top Bar */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-nutri-gray-200 flex-shrink-0">
           <button
+            type="button"
+            aria-label="Abrir menú"
             onClick={() => setMobileOpen(true)}
             className="p-2 rounded-lg hover:bg-nutri-gray-100 text-nutri-gray-700"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
           <div className="flex items-center space-x-2">
             <Heart className="w-5 h-5 text-nutri-secondary fill-nutri-secondary" />

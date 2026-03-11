@@ -45,11 +45,13 @@ function calcularNutrientes(alimentos: AlimentoSeleccionado[]) {
       return {
         calorias: acc.calorias + (alimento.energia_kcal ?? 0) * f,
         proteina: acc.proteina + (alimento.proteina_g ?? 0) * f,
-        carbs: acc.carbs + (alimento.carbohidratos_g ?? 0) * f,
-        grasas: acc.grasas + (alimento.grasa_g ?? 0) * f,
+        carbs:    acc.carbs    + (alimento.carbohidratos_g ?? 0) * f,
+        grasas:   acc.grasas   + (alimento.grasa_g ?? 0) * f,
+        fibra:    acc.fibra    + (alimento.fibra_g ?? 0) * f,
+        sodio:    acc.sodio    + (alimento.sodio_mg ?? 0) * f,
       };
     },
-    { calorias: 0, proteina: 0, carbs: 0, grasas: 0 }
+    { calorias: 0, proteina: 0, carbs: 0, grasas: 0, fibra: 0, sodio: 0 }
   );
 }
 
@@ -325,6 +327,8 @@ export default function DiarioComidas() {
                         <p className="text-xs text-nutri-gray-500">
                           {((alimento.energia_kcal ?? 0) * f).toFixed(0)} kcal &middot;{' '}
                           {((alimento.proteina_g ?? 0) * f).toFixed(1)} g prot
+                          {alimento.fibra_g ? ` · ${(alimento.fibra_g * f).toFixed(1)} g fibra` : ''}
+                          {alimento.sodio_mg ? ` · ${(alimento.sodio_mg * f).toFixed(0)} mg sodio` : ''}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2 shrink-0">
@@ -354,12 +358,14 @@ export default function DiarioComidas() {
 
             {/* Totales preview */}
             {seleccionados.length > 0 && (
-              <div className="grid grid-cols-4 gap-2 bg-nutri-primary/5 rounded-xl p-3 mb-4 text-center">
+              <div className="grid grid-cols-3 gap-2 bg-nutri-primary/5 rounded-xl p-3 mb-4 text-center">
                 {[
                   { v: nutrForm.calorias.toFixed(0), u: 'kcal' },
                   { v: nutrForm.proteina.toFixed(1), u: 'prot g' },
                   { v: nutrForm.carbs.toFixed(1), u: 'carbs g' },
                   { v: nutrForm.grasas.toFixed(1), u: 'grasas g' },
+                  ...(nutrForm.fibra > 0  ? [{ v: nutrForm.fibra.toFixed(1), u: 'fibra g' }] : []),
+                  ...(nutrForm.sodio > 0  ? [{ v: nutrForm.sodio.toFixed(0), u: 'sodio mg' }] : []),
                 ].map(({ v, u }) => (
                   <div key={u}>
                     <p className="text-sm font-bold text-nutri-primary">{v}</p>

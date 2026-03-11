@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Calendar, BarChart3, Search, Flame, Activity, TrendingUp, AlertCircle } from 'lucide-react';
+import {
+  MessageSquare, Calendar, BarChart3, Search,
+  Flame, Activity, TrendingUp, AlertCircle,
+  Lightbulb, FlaskConical, Heart, ShieldAlert,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { obtenerPerfil, obtenerDiarioAlimentario } from '../services/api';
+import { obtenerPerfil, obtenerDiarioAlimentario, crearOActualizarPerfil } from '../services/api';
 
 const quickActions = [
-  { label: 'Chat IA', path: '/chat', icon: MessageSquare, color: 'bg-nutri-primary', desc: 'Consulta nutricional' },
-  { label: 'Diario', path: '/diario', icon: Calendar, color: 'bg-nutri-success', desc: 'Registrar comidas' },
-  { label: 'Estadísticas', path: '/estadisticas', icon: BarChart3, color: 'bg-nutri-info', desc: 'Ver progreso' },
-  { label: 'Alimentos', path: '/alimentos', icon: Search, color: 'bg-nutri-accent', desc: 'Buscar alimentos' },
+  { label: 'Chat IA',          path: '/chat',            icon: MessageSquare, color: 'bg-nutri-primary',   desc: 'Consulta nutricional' },
+  { label: 'Diario',           path: '/diario',          icon: Calendar,      color: 'bg-nutri-success',   desc: 'Registrar comidas' },
+  { label: 'Recomendaciones',  path: '/recomendaciones', icon: Lightbulb,     color: 'bg-amber-500',       desc: 'Ver sugerencias' },
+  { label: 'Estadísticas',     path: '/estadisticas',    icon: BarChart3,     color: 'bg-nutri-info',      desc: 'Ver progreso' },
+  { label: 'Alimentos',        path: '/alimentos',       icon: Search,        color: 'bg-nutri-accent',    desc: 'Buscar alimentos' },
+  { label: 'Exámenes',         path: '/examenes',        icon: FlaskConical,  color: 'bg-purple-500',      desc: 'Laboratorio' },
 ];
 
 interface PerfilData {
@@ -16,6 +22,11 @@ interface PerfilData {
   categoria_riesgo?: string;
   riesgo_prevent?: number;
   requiere_derivacion?: boolean;
+  antecedentes_familiares?: {
+    diabetes?: boolean;
+    hipertension?: boolean;
+    cardiopatia?: boolean;
+  };
 }
 
 interface RegistroComida {
@@ -25,32 +36,77 @@ interface RegistroComida {
   fecha?: string;
 }
 
+function imcColor(imc: number) {
+  if (imc < 18.5) return 'text-blue-500';
+  if (imc < 25)   return 'text-green-600';
+  if (imc < 30)   return 'text-amber-500';
+  return 'text-red-500';
+}
+function imcLabel(imc: number) {
+  if (imc < 18.5) return 'Bajo peso';
+  if (imc < 25)   return 'Normal';
+  if (imc < 30)   return 'Sobrepeso';
+  return 'Obesidad';
+}
+
+const actMap: Record<string, string> = {
+  sedentario: 'sedentario', ligero: 'ligero', moderado: 'moderado',
+  activo: 'intenso', muy_activo: 'muy_intenso',
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userId, displayName } = useAuth();
+  const { userId, displayName, user } = useAuth();
 
-  const [perfil, setPerfil] = useState<PerfilData | null>(null);
-  const [comidasHoy, setComidasHoy] = useState<RegistroComida[]>([]);
+  const [perfil, setPerfil]             = useState<PerfilData | null>(null);
+  const [comidasHoy, setComidasHoy]     = useState<RegistroComida[]>([]);
   const [loadingPerfil, setLoadingPerfil] = useState(true);
 
-  const hora = new Date().getHours();
+  const hora   = new Date().getHours();
   const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches';
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy    = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (!userId) return;
 
     const loadData = async () => {
       try {
-        const [perfilData, diarioData] = await Promise.allSettled([
+        const [perfilRes, diarioRes] = await Promise.allSettled([
           obtenerPerfil(userId),
           obtenerDiarioAlimentario(userId),
         ]);
 
-        if (perfilData.status === 'fulfilled') setPerfil(perfilData.value);
-        if (diarioData.status === 'fulfilled') {
-          const registros: RegistroComida[] = diarioData.value?.registros ?? [];
-          setComidasHoy(registros.filter((r: RegistroComida) => r.fecha === hoy));
+        if (perfilRes.status === 'fulfilled') {
+          setPerfil(perfilRes.value);
+        } else {
+          // Intentar auto-crear perfil desde metadata de Supabase (registro multi-paso)
+          const meta = user?.user_metadata;
+          if (meta?.peso_kg && meta?.altura_cm) {
+            try {
+              const data = await crearOActualizarPerfil(userId, {
+                edad:     meta.edad     ? parseInt(String(meta.edad))   : null,
+                sexo:     meta.sexo     || null,
+                peso_kg:  parseFloat(String(meta.peso_kg)),
+                altura_cm: parseFloat(String(meta.altura_cm)),
+                perimetro_cintura_cm: meta.perimetro_cintura_cm
+                  ? parseFloat(String(meta.perimetro_cintura_cm)) : null,
+                actividad_fisica: actMap[meta.nivel_actividad as string] ?? 'moderado',
+                fumador: false,
+                antecedentes_familiares: {
+                  diabetes:   meta.tiene_diabetes   ?? false,
+                  hipertension: meta.tiene_hipertension ?? false,
+                  cardiopatia:  meta.antecedentes_cardiovasculares ?? false,
+                  obesidad: false,
+                },
+              });
+              setPerfil(data);
+            } catch { /* perfil no creado, no importa */ }
+          }
+        }
+
+        if (diarioRes.status === 'fulfilled') {
+          const registros: RegistroComida[] = diarioRes.value?.registros ?? [];
+          setComidasHoy(registros.filter((r: RegistroComida) => r.fecha?.startsWith(hoy)));
         }
       } finally {
         setLoadingPerfil(false);
@@ -58,46 +114,37 @@ export default function Dashboard() {
     };
 
     loadData();
-  }, [userId, hoy]);
+  }, [userId, hoy, user]);
 
-  const caloriasHoy = comidasHoy.reduce((acc, r) => acc + (r.total_calorias ?? 0), 0);
-  const proteinaHoy = comidasHoy.reduce((acc, r) => acc + (r.total_proteina_g ?? 0), 0);
+  const caloriasHoy  = comidasHoy.reduce((acc, r) => acc + (r.total_calorias ?? 0), 0);
+  const proteinaHoy  = comidasHoy.reduce((acc, r) => acc + (r.total_proteina_g ?? 0), 0);
   const metaCalorias = 2200;
 
   const stats = [
     {
-      label: 'Calorías hoy',
-      value: loadingPerfil ? '...' : caloriasHoy.toFixed(0),
-      unit: 'kcal',
-      icon: Flame,
-      target: `meta: ${metaCalorias}`,
+      label: 'Calorías hoy', value: loadingPerfil ? '...' : caloriasHoy.toFixed(0),
+      unit: 'kcal', icon: Flame, target: `meta: ${metaCalorias}`,
       pct: Math.min((caloriasHoy / metaCalorias) * 100, 100),
     },
     {
-      label: 'Proteínas hoy',
-      value: loadingPerfil ? '...' : proteinaHoy.toFixed(1),
-      unit: 'g',
-      icon: Activity,
-      target: 'meta: 80 g',
+      label: 'Proteínas hoy', value: loadingPerfil ? '...' : proteinaHoy.toFixed(1),
+      unit: 'g', icon: Activity, target: 'meta: 80 g',
       pct: Math.min((proteinaHoy / 80) * 100, 100),
     },
     {
-      label: 'IMC',
-      value: loadingPerfil ? '...' : (perfil?.imc?.toFixed(1) ?? '—'),
-      unit: '',
-      icon: TrendingUp,
-      target: perfil?.categoria_riesgo ?? 'Sin datos',
+      label: 'IMC', value: loadingPerfil ? '...' : (perfil?.imc?.toFixed(1) ?? '—'),
+      unit: '', icon: TrendingUp, target: perfil?.categoria_riesgo ?? 'Sin datos',
       pct: perfil?.imc ? Math.min(((perfil.imc - 15) / 25) * 100, 100) : 0,
     },
     {
-      label: 'Comidas registradas',
-      value: loadingPerfil ? '...' : String(comidasHoy.length),
-      unit: 'hoy',
-      icon: Calendar,
-      target: 'Recomendado: 4',
+      label: 'Comidas registradas', value: loadingPerfil ? '...' : String(comidasHoy.length),
+      unit: 'hoy', icon: Calendar, target: 'Recomendado: 4',
       pct: Math.min((comidasHoy.length / 4) * 100, 100),
     },
   ];
+
+  const tieneDiabetes = perfil?.antecedentes_familiares?.diabetes;
+  const tieneHta      = perfil?.antecedentes_familiares?.hipertension;
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8">
@@ -109,13 +156,50 @@ export default function Dashboard() {
         <p className="text-nutri-gray-600 mt-1 text-sm">Resumen de tu día</p>
       </div>
 
-      {/* Alerta derivación */}
-      {perfil?.requiere_derivacion && (
-        <div className="flex items-start space-x-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm text-amber-800">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <p>
-            Tu perfil indica que podrías beneficiarte de una consulta con un profesional de salud.
-          </p>
+      {/* Condiciones de salud */}
+      {(tieneDiabetes || tieneHta || perfil?.requiere_derivacion) && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          {tieneDiabetes && (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate('/recomendaciones')}
+              onKeyDown={(e) => e.key === 'Enter' && navigate('/recomendaciones')}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-full text-sm text-orange-700 cursor-pointer hover:bg-orange-100 transition-colors"
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span>Diabetes — ver recomendaciones</span>
+            </div>
+          )}
+          {tieneHta && (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate('/recomendaciones')}
+              onKeyDown={(e) => e.key === 'Enter' && navigate('/recomendaciones')}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-sm text-blue-700 cursor-pointer hover:bg-blue-100 transition-colors"
+            >
+              <Heart className="w-4 h-4" />
+              <span>Hipertensión — guía DASH</span>
+            </div>
+          )}
+          {perfil?.requiere_derivacion && (
+            <div className="flex items-center space-x-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-sm text-amber-700">
+              <AlertCircle className="w-4 h-4" />
+              <span>Riesgo elevado — consulta con especialista</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* IMC rápido (si tiene perfil pero sin condiciones badges) */}
+      {perfil?.imc && !tieneDiabetes && !tieneHta && (
+        <div className="flex items-center space-x-3 bg-white border border-nutri-gray-200 rounded-xl px-4 py-3 mb-5 shadow-sm w-fit">
+          <TrendingUp className="w-4 h-4 text-nutri-primary" />
+          <span className="text-sm text-nutri-gray-600">IMC:</span>
+          <span className={`text-sm font-bold ${imcColor(perfil.imc)}`}>
+            {perfil.imc.toFixed(1)} — {imcLabel(perfil.imc)}
+          </span>
         </div>
       )}
 
@@ -125,18 +209,19 @@ export default function Dashboard() {
           <div key={label} className="bg-white rounded-2xl p-5 border border-nutri-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <Icon className="w-5 h-5 text-nutri-primary" />
-              <span className="text-xs text-nutri-gray-400 text-right max-w-20 leading-tight">
-                {target}
-              </span>
+              <span className="text-xs text-nutri-gray-400 text-right max-w-20 leading-tight">{target}</span>
             </div>
             <p className="text-2xl font-bold text-nutri-gray-900">
               {value}
               {unit && <span className="text-sm font-normal text-nutri-gray-500 ml-1">{unit}</span>}
             </p>
             <p className="text-xs text-nutri-gray-600 mt-0.5 mb-2">{label}</p>
-            <div className="h-1.5 bg-nutri-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-nutri-primary rounded-full" style={{ width: `${pct}%` }} />
-            </div>
+            <progress
+              value={pct}
+              max={100}
+              aria-label={`${label}: ${Math.round(pct)}%`}
+              className="w-full h-1.5 rounded-full overflow-hidden [&::-webkit-progress-bar]:bg-nutri-gray-100 [&::-webkit-progress-value]:bg-nutri-primary [&::-moz-progress-bar]:bg-nutri-primary"
+            />
           </div>
         ))}
       </div>
@@ -144,19 +229,19 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="text-base font-semibold text-nutri-gray-900 mb-4">Acciones Rápidas</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
           {quickActions.map(({ label, path, icon: Icon, color, desc }) => (
             <button
               key={path}
               type="button"
               onClick={() => navigate(path)}
-              className="bg-white rounded-2xl p-5 border border-nutri-gray-200 hover:border-nutri-primary hover:shadow-md transition-all text-left group"
+              className="bg-white rounded-2xl p-4 border border-nutri-gray-200 hover:border-nutri-primary hover:shadow-md transition-all text-left group"
             >
-              <div className={`w-11 h-11 ${color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
+              <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mb-2.5 group-hover:scale-105 transition-transform`}>
                 <Icon className="w-5 h-5 text-white" />
               </div>
-              <p className="font-semibold text-nutri-gray-900 text-sm">{label}</p>
-              <p className="text-xs text-nutri-gray-500 mt-0.5">{desc}</p>
+              <p className="font-semibold text-nutri-gray-900 text-xs leading-tight">{label}</p>
+              <p className="text-xs text-nutri-gray-400 mt-0.5 leading-tight hidden md:block">{desc}</p>
             </button>
           ))}
         </div>
@@ -191,13 +276,9 @@ export default function Dashboard() {
               <div key={idx} className="flex items-center justify-between py-2 border-b border-nutri-gray-100 last:border-0">
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 rounded-full bg-nutri-primary" />
-                  <span className="text-sm font-medium text-nutri-gray-800 capitalize">
-                    {r.tiempo_comida}
-                  </span>
+                  <span className="text-sm font-medium text-nutri-gray-800 capitalize">{r.tiempo_comida}</span>
                 </div>
-                <span className="text-sm text-nutri-gray-500">
-                  {(r.total_calorias ?? 0).toFixed(0)} kcal
-                </span>
+                <span className="text-sm text-nutri-gray-500">{(r.total_calorias ?? 0).toFixed(0)} kcal</span>
               </div>
             ))}
           </div>

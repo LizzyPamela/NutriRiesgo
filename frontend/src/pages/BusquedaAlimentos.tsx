@@ -191,25 +191,25 @@ const BusquedaAlimentos = () => {
                   <div className="bg-nutri-gray-50 rounded-lg p-2">
                     <p className="text-xs text-nutri-gray-600">Energía</p>
                     <p className="font-semibold text-nutri-primary">
-                      {alimento.energia_kcal.toFixed(0)} kcal
+                      {alimento.energia_kcal != null ? alimento.energia_kcal.toFixed(0) : '—'} kcal
                     </p>
                   </div>
                   <div className="bg-nutri-gray-50 rounded-lg p-2">
                     <p className="text-xs text-nutri-gray-600">Proteína</p>
                     <p className="font-semibold text-nutri-success">
-                      {alimento.proteina_g.toFixed(1)} g
+                      {alimento.proteina_g != null ? alimento.proteina_g.toFixed(1) : '—'} g
                     </p>
                   </div>
                   <div className="bg-nutri-gray-50 rounded-lg p-2">
                     <p className="text-xs text-nutri-gray-600">Grasa</p>
                     <p className="font-semibold text-nutri-accent">
-                      {alimento.grasa_g.toFixed(1)} g
+                      {alimento.grasa_g != null ? alimento.grasa_g.toFixed(1) : '—'} g
                     </p>
                   </div>
                   <div className="bg-nutri-gray-50 rounded-lg p-2">
                     <p className="text-xs text-nutri-gray-600">Carbohidratos</p>
                     <p className="font-semibold text-nutri-info">
-                      {alimento.carbohidratos_g.toFixed(1)} g
+                      {alimento.carbohidratos_g != null ? alimento.carbohidratos_g.toFixed(1) : '—'} g
                     </p>
                   </div>
                 </div>
@@ -262,28 +262,28 @@ const BusquedaAlimentos = () => {
                   <div className="bg-gradient-to-br from-nutri-primary/10 to-nutri-primary/5 rounded-xl p-4">
                     <p className="text-xs text-nutri-gray-600 mb-1">Energía</p>
                     <p className="text-xl font-bold text-nutri-primary">
-                      {alimentoSeleccionado.energia_kcal.toFixed(0)}
+                      {alimentoSeleccionado.energia_kcal != null ? alimentoSeleccionado.energia_kcal.toFixed(0) : '—'}
                     </p>
                     <p className="text-xs text-nutri-gray-500">kcal</p>
                   </div>
                   <div className="bg-gradient-to-br from-nutri-success/10 to-nutri-success/5 rounded-xl p-4">
                     <p className="text-xs text-nutri-gray-600 mb-1">Proteína</p>
                     <p className="text-xl font-bold text-nutri-success">
-                      {alimentoSeleccionado.proteina_g.toFixed(1)}
+                      {alimentoSeleccionado.proteina_g != null ? alimentoSeleccionado.proteina_g.toFixed(1) : '—'}
                     </p>
                     <p className="text-xs text-nutri-gray-500">g</p>
                   </div>
                   <div className="bg-gradient-to-br from-nutri-accent/10 to-nutri-accent/5 rounded-xl p-4">
                     <p className="text-xs text-nutri-gray-600 mb-1">Grasa</p>
                     <p className="text-xl font-bold text-nutri-accent">
-                      {alimentoSeleccionado.grasa_g.toFixed(1)}
+                      {alimentoSeleccionado.grasa_g != null ? alimentoSeleccionado.grasa_g.toFixed(1) : '—'}
                     </p>
                     <p className="text-xs text-nutri-gray-500">g</p>
                   </div>
                   <div className="bg-gradient-to-br from-nutri-info/10 to-nutri-info/5 rounded-xl p-4">
                     <p className="text-xs text-nutri-gray-600 mb-1">Carbohidratos</p>
                     <p className="text-xl font-bold text-nutri-info">
-                      {alimentoSeleccionado.carbohidratos_g.toFixed(1)}
+                      {alimentoSeleccionado.carbohidratos_g != null ? alimentoSeleccionado.carbohidratos_g.toFixed(1) : '—'}
                     </p>
                     <p className="text-xs text-nutri-gray-500">g</p>
                   </div>

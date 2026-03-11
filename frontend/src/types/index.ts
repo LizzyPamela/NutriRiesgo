@@ -35,6 +35,7 @@ export interface Alimento {
   grasa_g: number;
   carbohidratos_g: number;
   fibra_g?: number;
+  sodio_mg?: number;
   calcio_mg?: number;
   hierro_mg?: number;
   vitamina_a_ug?: number;

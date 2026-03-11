@@ -1,47 +1,218 @@
 import React, { useState } from 'react';
-import { Heart, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import {
+  Heart, Mail, Lock, User, ArrowRight, ArrowLeft,
+  AlertCircle, Scale, Ruler, Activity
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
+// ── Registration data shape ──────────────────────────────────────────────────
+interface RegData {
+  nombre: string;
+  email: string;
+  password: string;
+  edad: string;
+  sexo: 'M' | 'F' | '';
+  peso_kg: string;
+  altura_cm: string;
+  perimetro_cintura_cm: string;
+  nivel_actividad: string;
+  tiene_diabetes: boolean;
+  tiene_hipertension: boolean;
+  tiene_dislipidemia: boolean;
+  antecedentes_cardiovasculares: boolean;
+}
+
+const defaultReg: RegData = {
+  nombre: '', email: '', password: '',
+  edad: '', sexo: '', peso_kg: '', altura_cm: '', perimetro_cintura_cm: '',
+  nivel_actividad: 'moderado',
+  tiene_diabetes: false, tiene_hipertension: false,
+  tiene_dislipidemia: false, antecedentes_cardiovasculares: false,
+};
+
+const nivelesActividad = [
+  { value: 'sedentario', label: 'Sedentario', desc: 'Sin ejercicio regular', emoji: '🪑' },
+  { value: 'ligero',     label: 'Ligero',     desc: '1-3 días/semana',       emoji: '🚶' },
+  { value: 'moderado',  label: 'Moderado',   desc: '3-5 días/semana',       emoji: '🚴' },
+  { value: 'activo',    label: 'Activo',     desc: '6-7 días/semana',       emoji: '🏃' },
+  { value: 'muy_activo',label: 'Muy activo', desc: 'Ejercicio intenso diario', emoji: '⚡' },
+];
+
+const condicionesSalud = [
+  { key: 'tiene_diabetes'                  as keyof RegData, label: 'Diabetes Mellitus Tipo 2' },
+  { key: 'tiene_hipertension'              as keyof RegData, label: 'Hipertensión Arterial' },
+  { key: 'tiene_dislipidemia'              as keyof RegData, label: 'Dislipidemia (colesterol elevado)' },
+  { key: 'antecedentes_cardiovasculares'   as keyof RegData, label: 'Antecedentes cardiovasculares' },
+];
+
+function calcIMC(peso: string, altura: string): number | null {
+  const p = parseFloat(peso);
+  const a = parseFloat(altura);
+  if (!p || !a || a <= 0) return null;
+  return p / Math.pow(a / 100, 2);
+}
+
+function imcLabel(imc: number): { texto: string; color: string } {
+  if (imc < 18.5) return { texto: 'Bajo peso', color: 'text-blue-500' };
+  if (imc < 25)   return { texto: 'Normal',    color: 'text-green-600' };
+  if (imc < 30)   return { texto: 'Sobrepeso', color: 'text-amber-500' };
+  return              { texto: 'Obesidad',  color: 'text-red-500' };
+}
+
+// ── Step progress indicator ──────────────────────────────────────────────────
+function StepProgress({ step, total }: { step: number; total: number }) {
+  return (
+    <div className="flex items-center justify-center space-x-2 mb-6">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-2 rounded-full transition-all ${
+            i + 1 === step
+              ? 'w-6 bg-nutri-primary'
+              : i + 1 < step
+              ? 'w-2 bg-nutri-primary/50'
+              : 'w-2 bg-nutri-gray-200'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Toggle switch ────────────────────────────────────────────────────────────
+function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label ?? (value ? 'Activado' : 'Desactivado')}
+      aria-pressed={value ? 'true' : 'false'}
+      onClick={() => onChange(!value)}
+      className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${value ? 'bg-nutri-primary' : 'bg-nutri-gray-300'}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-6' : 'translate-x-0.5'}`}
+      />
+    </button>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [step, setStep] = useState(1);
+
+  // Login fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [nombre, setNombre] = useState('');
+
+  // Registration data
+  const [reg, setReg] = useState<RegData>({ ...defaultReg });
+  const updateReg = <K extends keyof RegData>(k: K, v: RegData[K]) =>
+    setReg((prev) => ({ ...prev, [k]: v }));
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // ── Login submit ────────────────────────────────────────────────────────
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate('/dashboard');
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { nombre } },
-        });
-        if (error) throw error;
-        setConfirmado(true);
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      navigate('/dashboard');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error de autenticación';
       if (msg.includes('Invalid login credentials')) setError('Correo o contraseña incorrectos.');
-      else if (msg.includes('User already registered')) setError('Ya existe una cuenta con este correo. Inicia sesión.');
-      else if (msg.includes('Password should be at least')) setError('La contraseña debe tener al menos 6 caracteres.');
+      else if (msg.includes('Email not confirmed')) setError('Confirma tu correo antes de iniciar sesión.');
       else setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Step validation ─────────────────────────────────────────────────────
+  const validateStep = (): string => {
+    if (step === 1) {
+      if (!reg.nombre.trim()) return 'Ingresa tu nombre.';
+      if (!reg.email.includes('@')) return 'Correo electrónico inválido.';
+      if (reg.password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+    }
+    if (step === 2) {
+      const edad = parseInt(reg.edad);
+      if (!reg.edad || edad < 18 || edad > 100) return 'Edad debe estar entre 18 y 100 años.';
+      if (!reg.sexo) return 'Selecciona tu sexo biológico.';
+      const peso = parseFloat(reg.peso_kg);
+      if (!reg.peso_kg || peso < 30 || peso > 200) return 'Peso debe estar entre 30 y 200 kg.';
+      const altura = parseFloat(reg.altura_cm);
+      if (!reg.altura_cm || altura < 100 || altura > 250) return 'Altura debe estar entre 100 y 250 cm.';
+      const cintura = parseFloat(reg.perimetro_cintura_cm);
+      if (!reg.perimetro_cintura_cm || cintura < 40 || cintura > 200) return 'Perímetro de cintura debe estar entre 40 y 200 cm.';
+    }
+    return '';
+  };
+
+  const handleNext = () => {
+    const err = validateStep();
+    if (err) { setError(err); return; }
+    setError('');
+    setStep((s) => s + 1);
+  };
+
+  // ── Registration submit (step 4) ────────────────────────────────────────
+  const handleRegister = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: reg.email,
+        password: reg.password,
+        options: {
+          data: {
+            nombre: reg.nombre,
+            edad: reg.edad,
+            sexo: reg.sexo,
+            peso_kg: reg.peso_kg,
+            altura_cm: reg.altura_cm,
+            perimetro_cintura_cm: reg.perimetro_cintura_cm,
+            nivel_actividad: reg.nivel_actividad,
+            tiene_diabetes: reg.tiene_diabetes,
+            tiene_hipertension: reg.tiene_hipertension,
+            tiene_dislipidemia: reg.tiene_dislipidemia,
+            antecedentes_cardiovasculares: reg.antecedentes_cardiovasculares,
+          },
+        },
+      });
+      if (error) throw error;
+      setConfirmado(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al registrarse';
+      if (msg.includes('User already registered')) setError('Ya existe una cuenta con este correo.');
+      else setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const switchToLogin = () => {
+    setIsLogin(true);
+    setStep(1);
+    setReg({ ...defaultReg });
+    setError('');
+  };
+
+  const switchToRegister = () => {
+    setIsLogin(false);
+    setStep(1);
+    setError('');
+  };
+
+  // ── Confirmation screen ─────────────────────────────────────────────────
   if (confirmado) {
     return (
       <div className="min-h-screen bg-linear-to-br from-nutri-primary/5 via-white to-nutri-secondary/5 flex items-center justify-center p-4">
@@ -50,12 +221,15 @@ const Login = () => {
             <Heart className="w-8 h-8 text-nutri-success" />
           </div>
           <h2 className="text-2xl font-bold text-nutri-gray-900 mb-2">Cuenta creada</h2>
-          <p className="text-nutri-gray-600 mb-6">
-            Revisa tu correo <strong>{email}</strong> para confirmar tu cuenta, luego inicia sesión.
+          <p className="text-nutri-gray-600 mb-2">
+            Revisa tu correo <strong>{reg.email}</strong> para confirmar tu cuenta.
+          </p>
+          <p className="text-sm text-nutri-gray-500 mb-6">
+            Tu perfil nutricional se guardará automáticamente la primera vez que inicies sesión.
           </p>
           <button
             type="button"
-            onClick={() => { setConfirmado(false); setIsLogin(true); }}
+            onClick={switchToLogin}
             className="px-6 py-3 bg-nutri-primary text-white rounded-lg font-medium hover:bg-nutri-primary-dark transition-colors"
           >
             Ir a Iniciar Sesión
@@ -64,6 +238,8 @@ const Login = () => {
       </div>
     );
   }
+
+  const imc = calcIMC(reg.peso_kg, reg.altura_cm);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-nutri-primary/5 via-white to-nutri-secondary/5 flex items-center justify-center p-4">
@@ -76,12 +252,12 @@ const Login = () => {
           </button>
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Tabs */}
           <div className="flex mb-6 bg-nutri-gray-100 rounded-lg p-1">
             <button
-              onClick={() => { setIsLogin(true); setError(''); }}
+              type="button"
+              onClick={switchToLogin}
               className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
                 isLogin ? 'bg-white text-nutri-primary shadow-sm' : 'text-nutri-gray-600 hover:text-nutri-gray-900'
               }`}
@@ -89,7 +265,8 @@ const Login = () => {
               Iniciar Sesión
             </button>
             <button
-              onClick={() => { setIsLogin(false); setError(''); }}
+              type="button"
+              onClick={switchToRegister}
               className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
                 !isLogin ? 'bg-white text-nutri-primary shadow-sm' : 'text-nutri-gray-600 hover:text-nutri-gray-900'
               }`}
@@ -106,77 +283,279 @@ const Login = () => {
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
+          {/* ── LOGIN ─────────────────────────────────────────────────────── */}
+          {isLogin ? (
+            <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-nutri-gray-700 mb-2">Nombre Completo</label>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-2">Correo Electrónico</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-nutri-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-nutri-gray-400" />
                   <input
-                    type="text"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    required={!isLogin}
-                    placeholder="Tu nombre completo"
+                    type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    required placeholder="tu@email.com"
                     className="w-full pl-10 pr-4 py-3 border border-nutri-gray-300 rounded-lg focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none transition-all"
                   />
                 </div>
               </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-nutri-gray-700 mb-2">Correo Electrónico</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-nutri-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="tu@email.com"
-                  className="w-full pl-10 pr-4 py-3 border border-nutri-gray-300 rounded-lg focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none transition-all"
-                />
+              <div>
+                <label className="block text-sm font-medium text-nutri-gray-700 mb-2">Contraseña</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-nutri-gray-400" />
+                  <input
+                    type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                    required minLength={6} placeholder="••••••••"
+                    className="w-full pl-10 pr-4 py-3 border border-nutri-gray-300 rounded-lg focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none transition-all"
+                  />
+                </div>
               </div>
-            </div>
+              <button
+                type="submit" disabled={loading}
+                className="w-full bg-nutri-primary text-white py-3 rounded-lg hover:bg-nutri-primary-dark transition-colors font-semibold flex items-center justify-center space-x-2 shadow-lg disabled:opacity-60"
+              >
+                {loading
+                  ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <><span>Iniciar Sesión</span><ArrowRight className="w-5 h-5" /></>}
+              </button>
+            </form>
 
+          ) : (
+            /* ── REGISTRATION STEPS ──────────────────────────────────────── */
             <div>
-              <label className="block text-sm font-medium text-nutri-gray-700 mb-2">Contraseña</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-nutri-gray-400" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-3 border border-nutri-gray-300 rounded-lg focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none transition-all"
-                />
-              </div>
-            </div>
+              <StepProgress step={step} total={4} />
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-nutri-primary text-white py-3 rounded-lg hover:bg-nutri-primary-dark transition-colors font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>{isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
+              {/* STEP 1 — Cuenta */}
+              {step === 1 && (
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold text-nutri-gray-600 mb-4">Paso 1 de 4 — Datos de cuenta</p>
+                  <div>
+                    <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Nombre Completo</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nutri-gray-400" />
+                      <input
+                        type="text" value={reg.nombre} onChange={(e) => updateReg('nombre', e.target.value)}
+                        placeholder="Tu nombre completo"
+                        className="w-full pl-9 pr-4 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Correo Electrónico</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nutri-gray-400" />
+                      <input
+                        type="email" value={reg.email} onChange={(e) => updateReg('email', e.target.value)}
+                        placeholder="tu@email.com"
+                        className="w-full pl-9 pr-4 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Contraseña</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nutri-gray-400" />
+                      <input
+                        type="password" value={reg.password} onChange={(e) => updateReg('password', e.target.value)}
+                        placeholder="Mínimo 8 caracteres"
+                        className="w-full pl-9 pr-4 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:border-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button" onClick={handleNext}
+                    className="w-full bg-nutri-primary text-white py-3 rounded-lg font-semibold hover:bg-nutri-primary-dark transition-colors flex items-center justify-center space-x-2 mt-2"
+                  >
+                    <span>Siguiente</span><ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
               )}
-            </button>
-          </form>
+
+              {/* STEP 2 — Medidas */}
+              {step === 2 && (
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold text-nutri-gray-600 mb-4">Paso 2 de 4 — Datos físicos</p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Edad (años)</label>
+                      <input
+                        type="number" value={reg.edad} onChange={(e) => updateReg('edad', e.target.value)}
+                        min="18" max="100" placeholder="ej: 25"
+                        className="w-full px-3 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Sexo biológico</label>
+                      <div className="flex space-x-2">
+                        {(['M', 'F'] as const).map((v) => (
+                          <button
+                            key={v} type="button" onClick={() => updateReg('sexo', v)}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+                              reg.sexo === v
+                                ? 'bg-nutri-primary text-white border-nutri-primary'
+                                : 'border-nutri-gray-300 text-nutri-gray-700 hover:border-nutri-gray-400'
+                            }`}
+                          >
+                            {v === 'M' ? 'Masculino' : 'Femenino'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
+                        <Scale className="inline w-3.5 h-3.5 mr-1" />Peso (kg)
+                      </label>
+                      <input
+                        type="number" value={reg.peso_kg} onChange={(e) => updateReg('peso_kg', e.target.value)}
+                        min="30" max="200" step="0.1" placeholder="ej: 70"
+                        className="w-full px-3 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
+                        <Ruler className="inline w-3.5 h-3.5 mr-1" />Altura (cm)
+                      </label>
+                      <input
+                        type="number" value={reg.altura_cm} onChange={(e) => updateReg('altura_cm', e.target.value)}
+                        min="100" max="250" placeholder="ej: 165"
+                        className="w-full px-3 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Perímetro de cintura (cm)</label>
+                    <input
+                      type="number" value={reg.perimetro_cintura_cm} onChange={(e) => updateReg('perimetro_cintura_cm', e.target.value)}
+                      min="40" max="200" placeholder="ej: 80"
+                      className="w-full px-3 py-2.5 border border-nutri-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
+                    />
+                    <p className="text-xs text-nutri-gray-500 mt-1">Necesario para evaluar adiposidad central</p>
+                  </div>
+
+                  {/* Live IMC */}
+                  {imc !== null && (
+                    <div className="flex items-center justify-between bg-nutri-gray-50 rounded-lg px-4 py-2.5 border border-nutri-gray-200">
+                      <span className="text-sm text-nutri-gray-600">IMC calculado:</span>
+                      <span className={`text-sm font-bold ${imcLabel(imc).color}`}>
+                        {imc.toFixed(1)} — {imcLabel(imc).texto}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-3 pt-1">
+                    <button
+                      type="button" onClick={() => { setError(''); setStep(1); }}
+                      className="flex-1 py-2.5 border border-nutri-gray-300 text-nutri-gray-700 rounded-lg text-sm font-medium hover:bg-nutri-gray-50 flex items-center justify-center space-x-1.5"
+                    >
+                      <ArrowLeft className="w-4 h-4" /><span>Anterior</span>
+                    </button>
+                    <button
+                      type="button" onClick={handleNext}
+                      className="flex-1 py-2.5 bg-nutri-primary text-white rounded-lg text-sm font-semibold hover:bg-nutri-primary-dark flex items-center justify-center space-x-1.5"
+                    >
+                      <span>Siguiente</span><ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3 — Actividad física */}
+              {step === 3 && (
+                <div className="space-y-4">
+                  <p className="text-sm font-semibold text-nutri-gray-600 mb-4">
+                    <Activity className="inline w-4 h-4 mr-1.5" />Paso 3 de 4 — Actividad física
+                  </p>
+                  <div className="space-y-2">
+                    {nivelesActividad.map(({ value, label, desc, emoji }) => (
+                      <button
+                        key={value} type="button" onClick={() => updateReg('nivel_actividad', value)}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                          reg.nivel_actividad === value
+                            ? 'border-nutri-primary bg-nutri-primary/5 text-nutri-primary'
+                            : 'border-nutri-gray-200 bg-white hover:border-nutri-gray-300 text-nutri-gray-700'
+                        }`}
+                      >
+                        <span className="text-xl">{emoji}</span>
+                        <div>
+                          <p className="text-sm font-semibold">{label}</p>
+                          <p className="text-xs text-nutri-gray-500">{desc}</p>
+                        </div>
+                        {reg.nivel_actividad === value && (
+                          <div className="ml-auto w-4 h-4 rounded-full bg-nutri-primary" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex space-x-3 pt-1">
+                    <button
+                      type="button" onClick={() => { setError(''); setStep(2); }}
+                      className="flex-1 py-2.5 border border-nutri-gray-300 text-nutri-gray-700 rounded-lg text-sm font-medium hover:bg-nutri-gray-50 flex items-center justify-center space-x-1.5"
+                    >
+                      <ArrowLeft className="w-4 h-4" /><span>Anterior</span>
+                    </button>
+                    <button
+                      type="button" onClick={() => { setError(''); setStep(4); }}
+                      className="flex-1 py-2.5 bg-nutri-primary text-white rounded-lg text-sm font-semibold hover:bg-nutri-primary-dark flex items-center justify-center space-x-1.5"
+                    >
+                      <span>Siguiente</span><ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4 — Condiciones de salud */}
+              {step === 4 && (
+                <div className="space-y-4">
+                  <div className="mb-1">
+                    <p className="text-sm font-semibold text-nutri-gray-600">Paso 4 de 4 — Condiciones de salud</p>
+                    <p className="text-xs text-nutri-gray-500 mt-0.5">Opcional. Permite personalizar tus recomendaciones.</p>
+                  </div>
+                  <div className="space-y-3">
+                    {condicionesSalud.map(({ key, label }) => (
+                      <div key={key} className="flex items-center justify-between py-2.5 px-3 border border-nutri-gray-200 rounded-xl">
+                        <label className="text-sm text-nutri-gray-700 cursor-pointer">{label}</label>
+                        <Toggle
+                          value={reg[key] as boolean}
+                          onChange={(v) => setReg((prev) => ({ ...prev, [key]: v }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
+                    Esta herramienta es educativa y no sustituye la consulta médica profesional.
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      type="button" onClick={() => { setError(''); setStep(3); }}
+                      className="flex-1 py-2.5 border border-nutri-gray-300 text-nutri-gray-700 rounded-lg text-sm font-medium hover:bg-nutri-gray-50 flex items-center justify-center space-x-1.5"
+                    >
+                      <ArrowLeft className="w-4 h-4" /><span>Anterior</span>
+                    </button>
+                    <button
+                      type="button" onClick={handleRegister} disabled={loading}
+                      className="flex-1 py-2.5 bg-nutri-primary text-white rounded-lg text-sm font-semibold hover:bg-nutri-primary-dark disabled:opacity-60 flex items-center justify-center space-x-1.5"
+                    >
+                      {loading
+                        ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        : <><span>Crear Cuenta</span><ArrowRight className="w-4 h-4" /></>}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-nutri-gray-600">
               {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
               <button
-                onClick={() => { setIsLogin(!isLogin); setError(''); }}
+                type="button"
+                onClick={isLogin ? switchToRegister : switchToLogin}
                 className="text-nutri-primary font-semibold hover:text-nutri-primary-dark"
               >
                 {isLogin ? 'Regístrate aquí' : 'Inicia sesión'}

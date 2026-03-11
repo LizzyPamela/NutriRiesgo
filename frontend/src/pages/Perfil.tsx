@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { obtenerPerfil, crearOActualizarPerfil } from '../services/api';
 
 // Tipos alineados con el backend (perfil.py)
-type Sexo = 'masculino' | 'femenino' | '';
+type Sexo = 'M' | 'F' | '';
 type ActividadFisica = 'sedentario' | 'ligero' | 'moderado' | 'intenso' | 'muy_intenso';
 
 interface AntecedentesFA {
@@ -215,16 +215,16 @@ export default function Perfil() {
               <div>
                 <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Sexo biológico</label>
                 <div className="flex space-x-3">
-                  {(['masculino', 'femenino'] as Sexo[]).map((v) => (
+                  {([['M', 'Masculino'], ['F', 'Femenino']] as [Sexo, string][]).map(([v, label]) => (
                     <button
                       key={v} type="button" onClick={() => set('sexo')(v)}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors capitalize ${
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
                         form.sexo === v
                           ? 'bg-nutri-primary text-white border-nutri-primary'
                           : 'border-nutri-gray-200 text-nutri-gray-700 hover:border-nutri-gray-300'
                       }`}
                     >
-                      {v}
+                      {label}
                     </button>
                   ))}
                 </div>

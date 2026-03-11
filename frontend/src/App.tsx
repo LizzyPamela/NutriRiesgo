@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard';
 import DiarioComidas from './pages/DiarioComidas';
 import Estadisticas from './pages/Estadisticas';
 import Perfil from './pages/Perfil';
+import Recomendaciones from './pages/Recomendaciones';
+import ExamenesMedicos from './pages/ExamenesMedicos';
 
 function PrivateRoute() {
   const { session, loading } = useAuth();
@@ -35,9 +37,11 @@ function AppRoutes() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/diario" element={<DiarioComidas />} />
-          <Route path="/estadisticas" element={<Estadisticas />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/alimentos" element={<BusquedaAlimentos />} />
+          <Route path="/estadisticas"    element={<Estadisticas />} />
+          <Route path="/perfil"          element={<Perfil />} />
+          <Route path="/alimentos"       element={<BusquedaAlimentos />} />
+          <Route path="/recomendaciones" element={<Recomendaciones />} />
+          <Route path="/examenes"        element={<ExamenesMedicos />} />
         </Route>
       </Route>
     </Routes>
