@@ -150,7 +150,7 @@ export default function Dashboard() {
     },
     {
       label: 'Comidas registradas', value: loadingPerfil ? '...' : String(comidasHoy.length),
-      unit: 'hoy', icon: Calendar, target: 'Recomendado: 4',
+      unit: 'hoy', icon: Calendar, target: 'Recomendado: 5',
       pct: Math.min((comidasHoy.length / 4) * 100, 100),
     },
   ];

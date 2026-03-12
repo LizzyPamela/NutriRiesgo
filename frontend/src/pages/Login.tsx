@@ -549,7 +549,7 @@ const Login = () => {
         </div>
 
         <p className="text-center text-sm text-nutri-gray-500 mt-6">
-          Solo para estudiantes UNAH Comayagua &middot; Fines de investigación
+          Nutri-Riesgo © 2026 · Universidad Nacional Autónoma de Honduras UNAH
         </p>
       </div>
     </div>

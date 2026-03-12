@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
 
 @theme {
   --color-nutri-primary: #386641;
@@ -51,6 +50,8 @@ h1, h2, h3, h4 {
 h1 { font-size: clamp(1.875rem, 4vw, 3rem); }
 h2 { font-size: clamp(1.375rem, 2.5vw, 2rem); }
 h3 { font-size: clamp(1.125rem, 2vw, 1.375rem); }
+
+footer h3 { color: #ffffff; }
 
 p { color: var(--color-nutri-muted); line-height: 1.7; }
 
@@ -200,3 +201,4 @@ p { color: var(--color-nutri-muted); line-height: 1.7; }
   background: rgba(56, 102, 65, 0.15);
   color: var(--color-nutri-dark);
 }
+
