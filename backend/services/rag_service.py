@@ -3,6 +3,7 @@ Servicio RAG completo - Orquesta todo el pipeline
 """
 
 from typing import Dict, List, Optional, Tuple
+import asyncio
 import time
 
 # Servicios (se importarán los que creamos)
@@ -24,8 +25,8 @@ class RAGService:
         self.abstention_service = get_abstention_service()
         self.openai_service = get_openai_service()
         
-        self.top_k_chunks = 5
-        self.min_similarity = 0.3
+        self.top_k_chunks = 7
+        self.min_similarity = 0.25
         
         print("✅ RAG Service inicializado")
     
@@ -143,11 +144,11 @@ class RAGService:
             mensaje_derivacion = self.abstention_service.generar_mensaje_derivacion(razon_derivacion)
             respuesta = f"{respuesta}\n\n{mensaje_derivacion}"
         
-        # 12. Guardar conversación
+        # 12. Guardar conversación en thread (sync DB no puede bloquear el event loop)
         tiempo_ms = int((time.time() - inicio) * 1000)
-        
-        try:
-            conversation_id = guardar_conversacion(
+
+        def _guardar():
+            return guardar_conversacion(
                 user_id=user_id,
                 consulta=consulta,
                 respuesta=respuesta,
@@ -159,8 +160,15 @@ class RAGService:
                 tiempo_respuesta_ms=tiempo_ms,
                 costo_usd=costo_usd
             )
+
+        try:
+            loop = asyncio.get_running_loop()
+            conversation_id = await asyncio.wait_for(
+                loop.run_in_executor(None, _guardar),
+                timeout=5.0
+            )
         except Exception as e:
-            print(f"⚠️  Error guardando conversación: {str(e)}")
+            print(f"⚠️  Error guardando conversación: {type(e).__name__}: {str(e)}")
             conversation_id = None
         
         # 13. Retornar respuesta completa

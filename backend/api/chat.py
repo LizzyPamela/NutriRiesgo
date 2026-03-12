@@ -4,6 +4,7 @@ Endpoints para el sistema de chat RAG
 
 from fastapi import APIRouter, HTTPException, Depends, status
 from typing import Optional
+import asyncio
 import time
 
 from models.chat import (
@@ -124,34 +125,37 @@ async def obtener_conversaciones(
     """
     try:
         from utils.database import get_db_cursor
-        
-        with get_db_cursor() as cur:
-            cur.execute("""
-                SELECT 
-                    id,
-                    consulta,
-                    respuesta,
-                    abstension,
-                    derivacion,
-                    nivel_confianza,
-                    tipo_consulta,
-                    tiempo_respuesta_ms,
-                    costo_usd,
-                    created_at
-                FROM conversaciones
-                WHERE user_id = %s
-                ORDER BY created_at DESC
-                LIMIT %s OFFSET %s
-            """, (user_id, limite, offset))
-            
-            conversaciones = cur.fetchall()
-            
-            # Contar total
-            cur.execute("""
-                SELECT COUNT(*) FROM conversaciones WHERE user_id = %s
-            """, (user_id,))
-            total = cur.fetchone()['count']
-        
+
+        def _fetch():
+            with get_db_cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        id,
+                        consulta,
+                        respuesta,
+                        abstension,
+                        derivacion,
+                        nivel_confianza,
+                        tipo_consulta,
+                        tiempo_respuesta_ms,
+                        costo_usd,
+                        created_at
+                    FROM conversaciones
+                    WHERE user_id = %s
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s
+                """, (user_id, limite, offset))
+                rows = cur.fetchall()
+
+                cur.execute("""
+                    SELECT COUNT(*) FROM conversaciones WHERE user_id = %s
+                """, (user_id,))
+                total = cur.fetchone()['count']
+            return list(rows), total
+
+        loop = asyncio.get_running_loop()
+        conversaciones, total = await loop.run_in_executor(None, _fetch)
+
         return {
             "conversaciones": conversaciones,
             "total": total,
@@ -187,9 +191,12 @@ async def obtener_estadisticas(
     """
     try:
         from utils.database import obtener_estadisticas_sistema
-        
-        stats = obtener_estadisticas_sistema(fecha_inicio, fecha_fin)
-        
+
+        loop = asyncio.get_running_loop()
+        stats = await loop.run_in_executor(
+            None, lambda: obtener_estadisticas_sistema(fecha_inicio, fecha_fin)
+        )
+
         return stats
         
     except Exception as e:

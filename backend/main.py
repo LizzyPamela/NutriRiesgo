@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from config import settings, validate_config
-from api import chat, alimentos, perfil, comidas, health
+from api import chat, alimentos, perfil, comidas, health, proyecciones
 
 # ============================================================================
 # LIFESPAN - Inicialización y limpieza
@@ -29,8 +29,13 @@ async def lifespan(app: FastAPI):
         print(f"❌ Error de configuración: {str(e)}")
         raise
     
-    # Inicializar servicios (lazy loading - se cargan al primer uso)
-    print("✅ Servicios configurados para carga lazy")
+    # Pre-cargar modelo de embeddings para evitar timeout en primer request
+    try:
+        from services.embeddings_service import get_embeddings_service
+        get_embeddings_service()
+        print("OK: Modelo de embeddings listo")
+    except Exception as e:
+        print(f"Advertencia: No se pudo pre-cargar embeddings: {e}")
     
     print("\n🎯 API lista para recibir peticiones")
     print("📚 Documentación: http://localhost:8000/docs")
@@ -119,6 +124,12 @@ app.include_router(
     comidas.router,
     prefix="/comidas",
     tags=["Diario de Comidas"]
+)
+
+app.include_router(
+    proyecciones.router,
+    prefix="/proyecciones",
+    tags=["Proyecciones ECNT"]
 )
 
 # ============================================================================

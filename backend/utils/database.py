@@ -3,7 +3,7 @@ Utilidades para conexión y operaciones con la base de datos
 """
 
 import psycopg2
-from psycopg2.pool import SimpleConnectionPool
+from psycopg2.pool import ThreadedConnectionPool
 from psycopg2.extras import RealDictCursor
 from pgvector.psycopg2 import register_vector
 from contextlib import contextmanager
@@ -13,27 +13,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Pool de conexiones
-_connection_pool: Optional[SimpleConnectionPool] = None
+# Pool de conexiones (ThreadedConnectionPool es thread-safe para run_in_executor)
+_connection_pool: Optional[ThreadedConnectionPool] = None
 
-def get_connection_pool() -> SimpleConnectionPool:
+def get_connection_pool() -> ThreadedConnectionPool:
     """Obtiene o crea el pool de conexiones"""
     global _connection_pool
-    
+
     if _connection_pool is None:
         DATABASE_URL = os.getenv("DATABASE_URL")
-        
+
         if not DATABASE_URL:
             raise ValueError("DATABASE_URL no configurada")
-        
-        _connection_pool = SimpleConnectionPool(
+
+        _connection_pool = ThreadedConnectionPool(
             minconn=1,
             maxconn=10,
             dsn=DATABASE_URL
         )
-        
+
         print("OK: Connection pool creado")
-    
+
     return _connection_pool
 
 @contextmanager

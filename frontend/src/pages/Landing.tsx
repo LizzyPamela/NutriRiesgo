@@ -179,7 +179,7 @@ const Landing = () => {
 
             {/* Columna 2 — Accesos */}
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-5">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-shadow-white">
                 Accesos rápidos
               </h3>
               <ul className="space-y-3">
@@ -238,7 +238,7 @@ const Landing = () => {
             <p className="text-xs text-gray-500">
               © 2026 NutriRiesgo-UNAH · Universidad Nacional Autónoma de Honduras
             </p>
-            <p className="text-xs text-gray-600">Solo fines de investigación académica</p>
+            <p className="text-xs text-gray-600">IS-115 I PAC 26 Solo con ines de investigación académica</p>
           </div>
         </div>
       </footer>

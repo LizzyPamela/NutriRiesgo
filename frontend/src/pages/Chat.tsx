@@ -23,6 +23,7 @@ const Chat = () => {
       timestamp: new Date(),
     }
   ]);
+  const { userId } = useAuth();
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -52,7 +53,7 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      const data = await enviarConsulta(input);
+      const data = await enviarConsulta(input, userId ?? undefined);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

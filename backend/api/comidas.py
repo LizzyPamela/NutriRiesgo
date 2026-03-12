@@ -5,6 +5,7 @@ Endpoints para diario alimentario
 from fastapi import APIRouter, HTTPException, status, Query
 from typing import Optional
 from datetime import date
+import asyncio
 import psycopg2.extras
 
 from utils.database import get_db_cursor
@@ -18,7 +19,7 @@ async def registrar_comida(registro: dict):
     Registra una comida en el diario alimentario.
     Espera: user_id, fecha, tiempo_comida, alimentos (lista), notas (opcional)
     """
-    try:
+    def _insert():
         with get_db_cursor() as cur:
             cur.execute("""
                 INSERT INTO registros_comidas
@@ -38,8 +39,58 @@ async def registrar_comida(registro: dict):
                 registro.get("total_grasas_g"),
                 registro.get("notas"),
             ))
-            result = cur.fetchone()
+            return cur.fetchone()
+
+    try:
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, _insert)
         return {"id": str(result["id"]), "message": "Comida registrada correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/frecuentes/{user_id}", summary="Alimentos más frecuentes por tiempo de comida")
+async def obtener_alimentos_frecuentes(
+    user_id: str,
+    tiempo_comida: Optional[str] = Query(None),
+    limite: int = Query(5, ge=1, le=20),
+):
+    """
+    Devuelve los alimentos que el usuario registra con más frecuencia,
+    opcionalmente filtrados por tiempo de comida (desayuno, almuerzo, cena, merienda).
+    Usado para autocomplete en el diario.
+    """
+    def _fetch():
+        with get_db_cursor() as cur:
+            params: list = [user_id]
+            filtro_tiempo = ""
+            if tiempo_comida:
+                filtro_tiempo = "AND tiempo_comida = %s"
+                params.append(tiempo_comida)
+            params.append(limite)
+            cur.execute(f"""
+                SELECT
+                    elem->>'alimento_id' AS alimento_id,
+                    elem->>'nombre'      AS nombre,
+                    COUNT(*)             AS frecuencia,
+                    AVG((elem->>'cantidad_g')::numeric)    AS avg_cantidad_g,
+                    AVG((elem->>'energia_kcal')::numeric /
+                        NULLIF((elem->>'cantidad_g')::numeric, 0) * 100
+                    ) AS energia_kcal_100g
+                FROM registros_comidas,
+                     jsonb_array_elements(alimentos) AS elem
+                WHERE user_id = %s
+                  {filtro_tiempo}
+                GROUP BY alimento_id, nombre
+                ORDER BY frecuencia DESC
+                LIMIT %s
+            """, params)
+            return [dict(r) for r in cur.fetchall()]
+
+    try:
+        loop = asyncio.get_running_loop()
+        sugerencias = await loop.run_in_executor(None, _fetch)
+        return {"sugerencias": sugerencias}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -51,7 +102,7 @@ async def obtener_diario(
     fecha_fin: Optional[date] = Query(None),
     limite: int = Query(30, ge=1, le=100),
 ):
-    try:
+    def _fetch():
         with get_db_cursor() as cur:
             query = """
                 SELECT id, fecha, tiempo_comida, alimentos,
@@ -60,7 +111,7 @@ async def obtener_diario(
                 FROM registros_comidas
                 WHERE user_id = %s
             """
-            params = [user_id]
+            params: list = [user_id]
 
             if fecha_inicio:
                 query += " AND fecha >= %s"
@@ -73,8 +124,11 @@ async def obtener_diario(
             params.append(limite)
 
             cur.execute(query, params)
-            registros = [dict(r) for r in cur.fetchall()]
+            return [dict(r) for r in cur.fetchall()]
 
+    try:
+        loop = asyncio.get_running_loop()
+        registros = await loop.run_in_executor(None, _fetch)
         return {"registros": registros, "total": len(registros)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -82,9 +136,13 @@ async def obtener_diario(
 
 @router.delete("/{registro_id}", summary="Eliminar registro de comida")
 async def eliminar_registro(registro_id: str):
-    try:
+    def _delete():
         with get_db_cursor() as cur:
             cur.execute("DELETE FROM registros_comidas WHERE id = %s", (registro_id,))
+
+    try:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _delete)
         return {"message": "Registro eliminado correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -111,6 +111,31 @@ export const eliminarRegistroComida = async (registroId: string) => {
   return response.data;
 };
 
+export const obtenerAlimentosFrecuentes = async (
+  userId: string,
+  tiempoComida?: string,
+  limite = 5
+) => {
+  const response = await api.get(`/comidas/frecuentes/${userId}`, {
+    params: { tiempo_comida: tiempoComida, limite },
+  });
+  return response.data;
+};
+
+// ============================================================================
+// PROYECCIONES ECNT
+// ============================================================================
+
+export const obtenerProyecciones = async (userId: string) => {
+  const response = await api.get(`/proyecciones/${userId}`, { timeout: 8000 });
+  return response.data;
+};
+
+export const obtenerEvidenciaProyeccion = async (enfermedad: string) => {
+  const response = await api.get(`/proyecciones/evidencia/${enfermedad}`, { timeout: 15000 });
+  return response.data;
+};
+
 // ============================================================================
 // HEALTH
 // ============================================================================

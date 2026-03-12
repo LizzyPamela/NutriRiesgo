@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { obtenerPerfil, obtenerDiarioAlimentario, crearOActualizarPerfil } from '../services/api';
+import { calcularObjetivos } from '../utils/nutricion';
 
 const quickActions = [
   { label: 'Chat IA',          path: '/chat',            icon: MessageSquare, color: 'bg-nutri-primary',   desc: 'Consulta nutricional' },
@@ -23,6 +24,11 @@ interface PerfilData {
   categoria_riesgo?: string;
   riesgo_prevent?: number;
   requiere_derivacion?: boolean;
+  peso_kg?: number;
+  altura_cm?: number;
+  edad?: number;
+  sexo?: string;
+  actividad_fisica?: string;
   antecedentes_familiares?: {
     diabetes?: boolean;
     hipertension?: boolean;
@@ -119,18 +125,23 @@ export default function Dashboard() {
 
   const caloriasHoy  = comidasHoy.reduce((acc, r) => acc + (r.total_calorias ?? 0), 0);
   const proteinaHoy  = comidasHoy.reduce((acc, r) => acc + (r.total_proteina_g ?? 0), 0);
-  const metaCalorias = 2200;
+
+  const objetivos = calcularObjetivos(
+    perfil?.peso_kg, perfil?.altura_cm, perfil?.edad, perfil?.sexo, perfil?.actividad_fisica,
+  );
+  const metaCalorias = objetivos?.get ?? 2200;
+  const metaProteina = objetivos?.proteina_g ?? 80;
 
   const stats = [
     {
       label: 'Calorías hoy', value: loadingPerfil ? '...' : caloriasHoy.toFixed(0),
-      unit: 'kcal', icon: Flame, target: `meta: ${metaCalorias}`,
+      unit: 'kcal', icon: Flame, target: `meta: ${metaCalorias} kcal`,
       pct: Math.min((caloriasHoy / metaCalorias) * 100, 100),
     },
     {
       label: 'Proteínas hoy', value: loadingPerfil ? '...' : proteinaHoy.toFixed(1),
-      unit: 'g', icon: Activity, target: 'meta: 80 g',
-      pct: Math.min((proteinaHoy / 80) * 100, 100),
+      unit: 'g', icon: Activity, target: `meta: ${metaProteina} g`,
+      pct: Math.min((proteinaHoy / metaProteina) * 100, 100),
     },
     {
       label: 'IMC', value: loadingPerfil ? '...' : (perfil?.imc?.toFixed(1) ?? '—'),

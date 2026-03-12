@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { obtenerDiarioAlimentario, obtenerPerfil } from '../services/api';
+import { calcularObjetivos } from '../utils/nutricion';
 
 interface RegistroComida {
   fecha: string;
@@ -16,8 +17,6 @@ interface DiaStats {
   fecha: string;
   kcal: number;
 }
-
-const META_KCAL = 2200;
 
 // Últimos 7 días
 function ultimos7Dias(): { day: string; fecha: string }[] {
@@ -35,7 +34,15 @@ function ultimos7Dias(): { day: string; fecha: string }[] {
 export default function Estadisticas() {
   const { userId } = useAuth();
   const [registros, setRegistros] = useState<RegistroComida[]>([]);
-  const [perfil, setPerfil] = useState<{ imc?: number; categoria_riesgo?: string } | null>(null);
+  const [perfil, setPerfil] = useState<{
+    imc?: number;
+    categoria_riesgo?: string;
+    peso_kg?: number;
+    altura_cm?: number;
+    edad?: number;
+    sexo?: string;
+    actividad_fisica?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,7 +66,13 @@ export default function Estadisticas() {
     return { day, fecha, kcal };
   });
 
-  const maxKcal = Math.max(...semana.map((d) => d.kcal), META_KCAL);
+  // Objetivo calorico personalizado (Mifflin-St. Jeor) o 2200 de referencia
+  const objetivos = calcularObjetivos(
+    perfil?.peso_kg, perfil?.altura_cm, perfil?.edad, perfil?.sexo, perfil?.actividad_fisica,
+  );
+  const metaKcal = objetivos?.get ?? 2200;
+
+  const maxKcal = Math.max(...semana.map((d) => d.kcal), metaKcal);
 
   // Totales últimos 7 días
   const registros7 = registros.filter((r) =>
@@ -71,7 +84,7 @@ export default function Estadisticas() {
   const totalGrasas7 = registros7.reduce((a, r) => a + (r.total_grasas_g ?? 0), 0);
   const diasConDatos = semana.filter((d) => d.kcal > 0).length;
   const promedioKcal = diasConDatos > 0 ? totalKcal7 / diasConDatos : 0;
-  const diasSobreObjetivo = semana.filter((d) => d.kcal > META_KCAL).length;
+  const diasSobreObjetivo = semana.filter((d) => d.kcal > metaKcal).length;
 
   // Distribución de macros (sobre totales)
   const totalMacros = totalProt7 * 4 + totalCarbs7 * 4 + totalGrasas7 * 9;
@@ -88,10 +101,13 @@ export default function Estadisticas() {
           { label: 'Proteínas', pct: 15, color: 'bg-nutri-success', grams: '— g' },
         ];
 
+  const objetivoLabel = objetivos ? `${metaKcal} kcal/día` : `${metaKcal} kcal/día (referencia)`;
+
   const resumen = [
+    { label: 'Objetivo calórico', value: objetivoLabel },
     { label: 'Promedio calórico diario', value: diasConDatos > 0 ? `${promedioKcal.toFixed(0)} kcal` : 'Sin datos' },
     { label: 'Días con registros', value: `${diasConDatos} de 7` },
-    { label: 'Días sobre objetivo', value: `${diasSobreObjetivo} de 7` },
+    { label: `Días sobre objetivo (>${metaKcal} kcal)`, value: `${diasSobreObjetivo} de 7` },
     { label: 'IMC actual', value: perfil?.imc ? `${perfil.imc.toFixed(1)} (${perfil.categoria_riesgo ?? 'ver perfil'})` : 'Completa tu perfil' },
     { label: 'Proteínas (7 días)', value: `${totalProt7.toFixed(0)} g total` },
   ];
@@ -138,7 +154,7 @@ export default function Estadisticas() {
               const x = i * slotW + slotW * 0.15;
               const w = slotW * 0.7;
               const y = BAR_H - barH;
-              const fill = kcal > META_KCAL ? '#E74C3C' : kcal > 0 ? '#4A7C59' : '#EEEEEE';
+              const fill = kcal > metaKcal ? '#E74C3C' : kcal > 0 ? '#4A7C59' : '#EEEEEE';
               return (
                 <g key={day}>
                   <rect x={`${x}%`} y={y} width={`${w}%`} height={barH} fill={fill} rx="4" />

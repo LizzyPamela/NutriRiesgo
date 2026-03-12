@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(python scripts/process_ecnt.py)",
+      "Bash(python backend/scripts/indexar_ecnt.py)"
+    ]
+  }
+}
