@@ -15,6 +15,7 @@ import {
   Lightbulb,
   FlaskConical,
   Info,
+  TrendingUp,
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { path: '/chat',            label: 'Chat IA',           icon: MessageSquare },
   { path: '/diario',          label: 'Diario',            icon: Calendar },
   { path: '/recomendaciones', label: 'Recomendaciones',   icon: Lightbulb },
+  { path: '/proyecciones',    label: 'Proyecciones ECNT', icon: TrendingUp },
   { path: '/examenes',        label: 'Exámenes',          icon: FlaskConical },
   { path: '/estadisticas',    label: 'Estadísticas',      icon: BarChart3 },
   { path: '/alimentos',       label: 'Alimentos',         icon: Search },
@@ -40,7 +42,7 @@ interface SidebarContentProps {
 function SidebarContent({ pathname, displayName, email, onLogout, onClose }: SidebarContentProps) {
   return (
     <>
-      <div className="flex items-center justify-between px-6 py-5 border-b border-nutri-gray-200 flex-shrink-0">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-nutri-gray-200 shrink-0">
         <Link
           to="/dashboard"
           onClick={onClose}
@@ -119,7 +121,7 @@ export default function Layout() {
   return (
     <div className="flex h-screen overflow-hidden bg-nutri-gray-50">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 flex-shrink-0 bg-white border-r border-nutri-gray-200">
+      <aside className="hidden md:flex flex-col w-64 shrink-0 bg-white border-r border-nutri-gray-200">
         <SidebarContent
           pathname={location.pathname}
           displayName={displayName}
@@ -150,7 +152,7 @@ export default function Layout() {
       {/* Main Column */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Top Bar */}
-        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-nutri-gray-200 flex-shrink-0">
+        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-nutri-gray-200 shrink-0">
           <button
             type="button"
             aria-label="Abrir menú"

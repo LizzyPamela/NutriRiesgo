@@ -11,6 +11,7 @@ import DiarioComidas from './pages/DiarioComidas';
 import Estadisticas from './pages/Estadisticas';
 import Perfil from './pages/Perfil';
 import Recomendaciones from './pages/Recomendaciones';
+import Proyecciones from './pages/Proyecciones';
 import ExamenesMedicos from './pages/ExamenesMedicos';
 import RegistroExitoso from './pages/RegistroExitoso';
 import AcercaDe from './pages/AcercaDe';
@@ -45,6 +46,7 @@ function AppRoutes() {
           <Route path="/perfil"          element={<Perfil />} />
           <Route path="/alimentos"       element={<BusquedaAlimentos />} />
           <Route path="/recomendaciones" element={<Recomendaciones />} />
+          <Route path="/proyecciones"    element={<Proyecciones />} />
           <Route path="/examenes"        element={<ExamenesMedicos />} />
           <Route path="/acerca-de"       element={<AcercaDe />} />
         </Route>
