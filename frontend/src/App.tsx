@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import InstallPrompt from './components/InstallPrompt';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Chat from './pages/Chat';
@@ -57,6 +58,7 @@ function App() {
     <Router>
       <AuthProvider>
         <AppRoutes />
+        <InstallPrompt />
       </AuthProvider>
     </Router>
   );

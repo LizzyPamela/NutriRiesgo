@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fondo redondeado -->
+  <rect width="512" height="512" rx="100" fill="#0066cc"/>
+  <!-- Hoja (nutrición) -->
+  <path d="M180 320 C140 240 160 140 256 100 C352 140 372 240 332 320 C300 380 212 380 180 320Z" fill="#00cc66"/>
+  <!-- Vena central de la hoja -->
+  <path d="M256 100 L256 340" stroke="#004499" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <!-- Venas laterales -->
+  <path d="M256 180 C230 200 210 220 200 250" stroke="#004499" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M256 180 C282 200 302 220 312 250" stroke="#004499" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M256 240 C236 255 220 270 215 295" stroke="#004499" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M256 240 C276 255 292 270 297 295" stroke="#004499" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <!-- Corazón pequeño abajo -->
+  <path d="M226 400 C226 390 236 382 246 388 C256 382 266 390 266 400 C266 412 246 426 246 426 C246 426 226 412 226 400Z" fill="white" opacity="0.9"/>
+  <!-- Texto NR -->
+  <text x="256" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" opacity="0.85">NutriRiesgo</text>
+</svg>

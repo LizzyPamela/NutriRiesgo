@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Loader2, X, ChevronDown } from 'lucide-react';
-import { buscarAlimentos, listarCategorias } from '../services/api';
+import { buscarAlimentos } from '../services/api';
 import type { Alimento } from '../types';
 
 const BusquedaAlimentos = () => {
