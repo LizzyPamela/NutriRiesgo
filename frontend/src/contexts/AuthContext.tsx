@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     'Usuario';
   const isAdmin = ADMIN_EMAILS.length > 0
     ? ADMIN_EMAILS.includes((user?.email ?? '').toLowerCase())
-    : true; // si no hay lista configurada, solo en dev, permite acceso
+    : false;
 
   return (
     <AuthContext.Provider

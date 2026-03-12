@@ -3,8 +3,10 @@ Endpoints del dashboard de auditoría/administración
 Usa las vistas analíticas del schema de BD.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 import asyncio
+
+from dependencies import require_admin
 
 router = APIRouter()
 
@@ -14,7 +16,7 @@ router = APIRouter()
     summary="Resumen general del sistema para el investigador",
     description="Métricas de uso vía vistas analíticas: usuarios, consultas, abstenciones, derivaciones, KB y costos"
 )
-async def obtener_resumen():
+async def obtener_resumen(current_user: str = Depends(require_admin)):
     try:
         from utils.database import get_db_cursor
 

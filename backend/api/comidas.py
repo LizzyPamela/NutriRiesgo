@@ -2,23 +2,31 @@
 Endpoints para diario alimentario
 """
 
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Depends
 from typing import Optional
 from datetime import date
 import asyncio
 import psycopg2.extras
 
 from utils.database import get_db_cursor
+from dependencies import require_auth
 
 router = APIRouter()
 
 
 @router.post("/registrar", summary="Registrar comida")
-async def registrar_comida(registro: dict):
+async def registrar_comida(registro: dict, current_user: str = Depends(require_auth)):
     """
     Registra una comida en el diario alimentario.
     Espera: user_id, fecha, tiempo_comida, alimentos (lista), notas (opcional)
     """
+    # El user_id del registro debe coincidir con el token
+    if registro.get("user_id") and registro["user_id"] != current_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+
+    # Forzar user_id desde el token
+    registro["user_id"] = current_user
+
     def _insert():
         with get_db_cursor() as cur:
             cur.execute("""
@@ -54,12 +62,16 @@ async def obtener_alimentos_frecuentes(
     user_id: str,
     tiempo_comida: Optional[str] = Query(None),
     limite: int = Query(5, ge=1, le=20),
+    current_user: str = Depends(require_auth),
 ):
     """
     Devuelve los alimentos que el usuario registra con más frecuencia,
     opcionalmente filtrados por tiempo de comida (desayuno, almuerzo, cena, merienda).
     Usado para autocomplete en el diario.
     """
+    if current_user != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+
     def _fetch():
         with get_db_cursor() as cur:
             params: list = [user_id]
@@ -101,7 +113,11 @@ async def obtener_diario(
     fecha_inicio: Optional[date] = Query(None),
     fecha_fin: Optional[date] = Query(None),
     limite: int = Query(30, ge=1, le=100),
+    current_user: str = Depends(require_auth),
 ):
+    if current_user != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+
     def _fetch():
         with get_db_cursor() as cur:
             query = """
@@ -135,14 +151,24 @@ async def obtener_diario(
 
 
 @router.delete("/{registro_id}", summary="Eliminar registro de comida")
-async def eliminar_registro(registro_id: str):
+async def eliminar_registro(registro_id: str, current_user: str = Depends(require_auth)):
     def _delete():
         with get_db_cursor() as cur:
-            cur.execute("DELETE FROM registros_comidas WHERE id = %s", (registro_id,))
+            # Solo eliminar si pertenece al usuario autenticado
+            cur.execute(
+                "DELETE FROM registros_comidas WHERE id = %s AND user_id = %s",
+                (registro_id, current_user),
+            )
+            return cur.rowcount
 
     try:
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, _delete)
+        deleted = await loop.run_in_executor(None, _delete)
+        if deleted == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Registro no encontrado o no autorizado")
         return {"message": "Registro eliminado correctamente"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

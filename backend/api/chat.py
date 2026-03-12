@@ -15,7 +15,7 @@ from models.chat import (
     ChunkRecuperado
 )
 from services.rag_service import get_rag_service
-from dependencies import get_current_user
+from dependencies import get_current_user, require_auth, require_admin
 from datetime import datetime
 
 router = APIRouter()
@@ -50,20 +50,27 @@ async def consultar(
 ):
     """
     Procesa una consulta usando el sistema RAG
-    
+
     Args:
         request: Datos de la consulta
         current_user: Usuario actual (opcional)
-    
+
     Returns:
         Respuesta completa del sistema RAG
     """
     try:
         # Obtener servicio RAG
         rag_service = get_rag_service()
-        
-        # Usar user_id del request o del current_user
-        user_id = request.user_id or current_user
+
+        # Si el request incluye user_id, debe coincidir con el token autenticado
+        if request.user_id and current_user and request.user_id != current_user:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No puedes realizar consultas en nombre de otro usuario",
+            )
+
+        # Usar user_id del token (si autenticado) o del request
+        user_id = current_user or request.user_id
         
         # Procesar consulta
         resultado = await rag_service.procesar_consulta(
@@ -109,20 +116,25 @@ async def obtener_conversaciones(
     user_id: str,
     limite: int = 10,
     offset: int = 0,
-    current_user: Optional[str] = Depends(get_current_user)
+    current_user: str = Depends(require_auth)
 ):
     """
     Obtiene el historial de conversaciones de un usuario
-    
+
     Args:
         user_id: ID del usuario
         limite: Número máximo de conversaciones a retornar
         offset: Offset para paginación
         current_user: Usuario actual
-    
+
     Returns:
         Lista de conversaciones
     """
+    if current_user != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado",
+        )
     try:
         from utils.database import get_db_cursor
 
@@ -177,7 +189,8 @@ async def obtener_conversaciones(
 )
 async def obtener_estadisticas(
     fecha_inicio: Optional[str] = None,
-    fecha_fin: Optional[str] = None
+    fecha_fin: Optional[str] = None,
+    current_user: str = Depends(require_admin)
 ):
     """
     Obtiene estadísticas del sistema

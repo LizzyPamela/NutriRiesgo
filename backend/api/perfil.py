@@ -4,18 +4,28 @@ Endpoints para gestión de perfil de usuario
 
 import os
 import requests
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import Optional
 import psycopg2.extras
 from psycopg2.extras import Json as PgJson
 
 from utils.database import get_db_cursor, obtener_perfil_usuario
+from dependencies import require_auth
 
 router = APIRouter()
 
+# Columnas permitidas para INSERT/UPDATE — previene SQL injection por nombre de campo
+CAMPOS_PERMITIDOS = {
+    "edad", "sexo", "peso_kg", "altura_cm", "perimetro_cintura_cm",
+    "antecedentes_familiares", "actividad_fisica", "fumador",
+    "riesgo_prevent", "categoria_riesgo", "requiere_derivacion", "motivo_derivacion",
+}
+
 
 @router.get("/{user_id}", summary="Obtener perfil de usuario")
-async def obtener_perfil(user_id: str):
+async def obtener_perfil(user_id: str, current_user: str = Depends(require_auth)):
+    if current_user != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
     try:
         perfil = obtener_perfil_usuario(user_id)
         if not perfil:
@@ -29,7 +39,9 @@ async def obtener_perfil(user_id: str):
 
 
 @router.post("/{user_id}", summary="Crear o actualizar perfil de usuario")
-async def upsert_perfil(user_id: str, datos: dict):
+async def upsert_perfil(user_id: str, datos: dict, current_user: str = Depends(require_auth)):
+    if current_user != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
     try:
         # Normalizar sexo: la BD acepta 'M'/'F'
         if 'sexo' in datos:
@@ -38,11 +50,9 @@ async def upsert_perfil(user_id: str, datos: dict):
             raw = str(datos['sexo']).lower()
             datos['sexo'] = sexo_map.get(raw, datos['sexo'])
 
-        # Excluir campos que no se deben insertar directamente:
-        # - user_id: ya es el parámetro de ruta
-        # - imc: columna generada automáticamente por la BD (peso_kg, altura_cm)
+        # Filtrar solo campos permitidos (excluye user_id, imc y campos desconocidos)
         EXCLUIR = {"user_id", "imc"}
-        campos = [k for k in datos if k not in EXCLUIR]
+        campos = [k for k in datos if k not in EXCLUIR and k in CAMPOS_PERMITIDOS]
 
         if not campos:
             raise HTTPException(status_code=400, detail="No hay campos válidos para actualizar")
@@ -67,7 +77,9 @@ async def upsert_perfil(user_id: str, datos: dict):
 
 
 @router.delete("/{user_id}", summary="Eliminar perfil de usuario")
-async def eliminar_perfil(user_id: str):
+async def eliminar_perfil(user_id: str, current_user: str = Depends(require_auth)):
+    if current_user != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
     try:
         with get_db_cursor() as cur:
             cur.execute("DELETE FROM perfiles_usuarios WHERE user_id = %s", (user_id,))
@@ -77,11 +89,13 @@ async def eliminar_perfil(user_id: str):
 
 
 @router.delete("/{user_id}/cuenta", summary="Eliminar cuenta completa (perfil + auth)")
-async def eliminar_cuenta(user_id: str):
+async def eliminar_cuenta(user_id: str, current_user: str = Depends(require_auth)):
     """
     Elimina todos los datos del usuario y su cuenta de autenticación.
     Requiere SUPABASE_SERVICE_KEY en el entorno.
     """
+    if current_user != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
     try:
         # 1. Eliminar datos de perfil y comidas en la BD
         with get_db_cursor() as cur:

@@ -1,7 +1,82 @@
-# NutriRiesgo-UNAH
+# NutriRiesgo — UNAH
 
-Plataforma de orientación nutricional con IA para Honduras y Centroamérica.
-Combina una base de conocimiento de guías clínicas (RAG) con una base de datos de 92 000+ alimentos para ofrecer consultas nutricionales contextualizadas.
+Plataforma educativa de evaluación nutricional y riesgo cardiovascular para estudiantes de la Universidad Nacional Autónoma de Honduras (UNAH).
+Combina una base de conocimiento de guías clínicas (RAG) con una base de datos de 92 891 alimentos para ofrecer consultas nutricionales contextualizadas y evaluación de riesgo personalizada.
+
+> **Aviso importante:** Este sistema es **EDUCATIVO**. No diagnostica enfermedades ni reemplaza la consulta médica profesional. Si presentas síntomas o resultados preocupantes, consulta a un médico o nutricionista.
+
+---
+
+## Cómo usar la aplicación
+
+### 1. Registro e inicio de sesión
+
+- Regístrate con tu correo institucional UNAH o personal
+- Confirma tu cuenta desde el enlace enviado a tu correo
+- Inicia sesión en la pantalla de acceso
+
+### 2. Completa tu perfil
+
+- Ingresa tus datos antropométricos: edad, sexo, peso, altura, perímetro de cintura
+- Indica tu nivel de actividad física y si eres fumador/a
+- Registra antecedentes familiares (diabetes, hipertensión, cardiopatía, obesidad)
+- El sistema calcula automáticamente tu IMC y categoría de riesgo cardiovascular (modelo PREVENT™ AHA)
+
+### 3. Chat nutricional inteligente
+
+- Escribe consultas en lenguaje natural: *"¿Cuántas calorías debo consumir al día?"*
+- El sistema busca en guías oficiales OMS/OPS/INCAP antes de generar la respuesta
+- Las respuestas citan las guías en que se basan
+- El chat se abstiene automáticamente ante preguntas fuera de su alcance (diagnósticos, medicamentos)
+
+### 4. Diario alimentario
+
+- Registra tus comidas por tiempo: desayuno, almuerzo, cena, merienda
+- Busca alimentos en la base de datos (92 891 alimentos: USDA FDC + INCAP + Honduras)
+- Ve el resumen diario de calorías, proteínas, carbohidratos y grasas
+- Compara tu ingesta con tus metas nutricionales calculadas por perfil
+
+### 5. Búsqueda de alimentos
+
+- Busca cualquier alimento por nombre
+- Filtra por categoría o por alimentos hondureños/centroamericanos
+- Consulta la tabla nutricional completa por 100 g
+
+### 6. Exámenes médicos
+
+- Registra resultados de laboratorio: glucosa, presión arterial, colesterol, triglicéridos, entre otros
+- El sistema interpreta si el valor está en rango normal, elevado o crítico
+- Visualiza el historial de tus exámenes a lo largo del tiempo
+
+### 7. Proyecciones de riesgo ECNT
+
+- Ve proyecciones de riesgo para enfermedades crónicas no transmisibles: diabetes tipo 2, hipertensión, enfermedad cardiovascular, hígado graso
+- Las proyecciones se basan en tu perfil, IMC, actividad física y antecedentes familiares
+- Cada proyección incluye la evidencia científica citada
+
+### 8. Recomendaciones personalizadas
+
+- Recibe recomendaciones semanales adaptadas a tu perfil de riesgo
+- Sugerencias de alimentación, actividad física y hábitos saludables
+
+---
+
+## Módulos del sistema
+
+| Módulo | Ruta | Acceso |
+|---|---|---|
+| Landing | `/` | Público |
+| Login / Registro | `/login` | Público |
+| Dashboard | `/dashboard` | Autenticado |
+| Chat nutricional IA | `/chat` | Autenticado |
+| Diario de comidas | `/diario` | Autenticado |
+| Búsqueda de alimentos | `/alimentos` | Autenticado |
+| Perfil antropométrico | `/perfil` | Autenticado |
+| Exámenes médicos | `/examenes` | Autenticado |
+| Proyecciones ECNT | `/proyecciones` | Autenticado |
+| Recomendaciones | `/recomendaciones` | Autenticado |
+| Estadísticas | `/estadisticas` | Autenticado |
+| Panel de auditoría | `/admin` | Solo administradores |
 
 ---
 
@@ -216,33 +291,35 @@ NutriRiesgo/
 
 ## Endpoints principales
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| `GET` | `/health` | Estado del servidor y DB |
-| `POST` | `/chat/consulta` | Consulta nutricional con RAG |
-| `GET` | `/alimentos/buscar?q=<query>` | Búsqueda en base de alimentos |
-| `GET` | `/perfil/{user_id}` | Obtener perfil de usuario |
-| `PUT` | `/perfil/{user_id}` | Actualizar perfil |
-| `GET` | `/comidas/{user_id}` | Listar comidas registradas |
-| `POST` | `/comidas` | Registrar nueva comida |
-| `DELETE` | `/comidas/{id}` | Eliminar comida |
+| Método | Ruta | Auth | Descripción |
+| --- | --- | --- | --- |
+| `GET` | `/health` | No | Estado del servidor y DB |
+| `POST` | `/chat/consulta` | Opcional | Consulta nutricional con RAG |
+| `GET` | `/chat/conversaciones/{user_id}` | Sí | Historial del usuario |
+| `GET` | `/chat/estadisticas` | Admin | Métricas del sistema |
+| `GET` | `/alimentos/buscar` | No | Búsqueda en base de alimentos |
+| `GET` | `/alimentos/{id}` | No | Detalle de un alimento |
+| `GET` | `/perfil/{user_id}` | Sí | Obtener perfil propio |
+| `POST` | `/perfil/{user_id}` | Sí | Crear/actualizar perfil |
+| `DELETE` | `/perfil/{user_id}` | Sí | Eliminar perfil |
+| `DELETE` | `/perfil/{user_id}/cuenta` | Sí | Eliminar cuenta completa |
+| `GET` | `/comidas/{user_id}` | Sí | Diario alimentario |
+| `POST` | `/comidas/registrar` | Sí | Registrar comida |
+| `DELETE` | `/comidas/{registro_id}` | Sí | Eliminar registro |
+| `GET` | `/proyecciones/{user_id}` | Sí | Proyecciones ECNT |
+| `GET` | `/admin/resumen` | Admin | Panel de auditoría |
 
-Documentación completa disponible en `/docs` (Swagger UI) con el backend corriendo.
+Documentación completa en `/docs` (Swagger UI) con el backend corriendo.
 
 ---
 
-## Rutas del frontend
+## Seguridad
 
-| Ruta | Página | Acceso |
-|---|---|---|
-| `/` | Landing | Público |
-| `/login` | Login / Registro | Público |
-| `/dashboard` | Dashboard | Autenticado |
-| `/chat` | Chat con IA | Autenticado |
-| `/diario` | Diario de comidas | Autenticado |
-| `/estadisticas` | Estadísticas | Autenticado |
-| `/perfil` | Perfil de usuario | Autenticado |
-| `/alimentos` | Búsqueda de alimentos | Autenticado |
+- **Autenticación JWT**: cada request al backend valida el token contra Supabase Auth (ES256/RS256)
+- **Protección IDOR**: cada usuario solo accede a sus propios datos; intentar acceder a datos ajenos devuelve 403
+- **Panel admin**: restringido a emails en `ADMIN_EMAILS`; validado en backend, no solo en frontend
+- **Whitelist de columnas**: el endpoint de perfil valida que solo se actualicen campos permitidos (previene SQL injection por nombre de columna)
+- **Variables sensibles**: nunca expuestas al frontend; solo `VITE_*` públicas en el bundle
 
 ---
 
