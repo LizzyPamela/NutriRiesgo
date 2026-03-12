@@ -166,16 +166,22 @@ Eres un sistema de ORIENTACIÓN nutricional preventiva, no un sustituto de atenc
     def _calcular_costo(self, tokens: int) -> float:
         """
         Calcula el costo estimado de la llamada
-        
-        Precios aproximados (marzo 2024):
-        - GPT-4: $0.03 / 1K tokens input, $0.06 / 1K tokens output
-        - GPT-3.5-turbo: $0.0015 / 1K tokens
+
+        Precios por 1K tokens (input/output, marzo 2025):
+        - gpt-4o-mini:  $0.00015 input / $0.00060 output
+        - gpt-4o:       $0.00250 input / $0.01000 output
+        - gpt-4-turbo:  $0.01000 input / $0.03000 output
+        - gpt-3.5-turbo:$0.00050 input / $0.00150 output
         """
-        if "gpt-4" in self.model:
-            # Aproximación: 60% input, 40% output
-            costo = (tokens * 0.6 * 0.03 + tokens * 0.4 * 0.06) / 1000
+        # Aproximación: 70% input, 30% output
+        if "gpt-4o-mini" in self.model:
+            costo = (tokens * 0.7 * 0.00015 + tokens * 0.3 * 0.00060) / 1000
+        elif "gpt-4o" in self.model:
+            costo = (tokens * 0.7 * 0.00250 + tokens * 0.3 * 0.01000) / 1000
+        elif "gpt-4" in self.model:
+            costo = (tokens * 0.7 * 0.01000 + tokens * 0.3 * 0.03000) / 1000
         else:  # gpt-3.5-turbo
-            costo = tokens * 0.0015 / 1000
+            costo = (tokens * 0.7 * 0.00050 + tokens * 0.3 * 0.00150) / 1000
         
         return round(costo, 6)
 

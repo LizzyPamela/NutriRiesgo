@@ -17,6 +17,8 @@ class TipoConsulta(str, Enum):
     RIESGO_CARDIOVASCULAR = "riesgo_cardiovascular"
     ALIMENTOS = "alimentos"
     GENERAL = "general"
+    CONSULTA_MEDICA = "consulta_medica"
+    ERROR = "error"
 
 class NivelConfianza(str, Enum):
     """Nivel de confianza de la respuesta"""

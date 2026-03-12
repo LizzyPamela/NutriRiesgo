@@ -26,17 +26,24 @@ class RAGService:
         self.abstention_service = get_abstention_service()
         self.openai_service = get_openai_service()
         
-        self.top_k_chunks = 7
+        self.top_k_chunks = 4
         self.min_similarity = 0.25
         
         print("✅ RAG Service inicializado")
     
     def _log(self, nivel: str, mensaje: str, detalles: dict = None):
         """Registra log en BD sin lanzar excepción si falla."""
+        # Convertir valores no serializables a string antes de insertar
+        detalles_safe = None
+        if detalles:
+            detalles_safe = {
+                k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+                for k, v in detalles.items()
+            }
         try:
-            registrar_log_sistema(nivel, mensaje, detalles)
+            registrar_log_sistema(nivel, mensaje, detalles_safe)
         except Exception as e:
-            print(f"⚠️  Log fallido ({nivel}): {e}")
+            print(f"[LOG FALLIDO] {nivel}: {e}")
 
     async def procesar_consulta(
         self,

@@ -228,7 +228,7 @@ def registrar_log_sistema(
         cur.execute("""
             INSERT INTO logs_sistema (nivel, mensaje, detalles)
             VALUES (%s, %s, %s)
-        """, (nivel, mensaje, psycopg2.extras.Json(detalles) if detalles else None))
+        """, (nivel.upper(), mensaje, psycopg2.extras.Json(detalles) if detalles else None))
 
 # ============================================================================
 # FUNCIONES DE ESTADÍSTICAS

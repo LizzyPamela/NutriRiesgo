@@ -436,8 +436,8 @@ export default function Admin() {
                 <div className="ml-auto flex gap-2">
                   {datos.logs_sistema.por_nivel.map((l) => (
                     <span key={l.nivel} className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      l.nivel === 'error'   ? 'bg-red-100 text-red-700' :
-                      l.nivel === 'warning' ? 'bg-amber-100 text-amber-700' :
+                      l.nivel.toLowerCase() === 'error'   ? 'bg-red-100 text-red-700' :
+                      l.nivel.toLowerCase() === 'warning' ? 'bg-amber-100 text-amber-700' :
                       'bg-green-100 text-green-700'
                     }`}>
                       {l.nivel} ({l.cantidad})
@@ -454,14 +454,14 @@ export default function Admin() {
                   <div className="space-y-2 max-h-72 overflow-y-auto">
                     {datos.logs_sistema.recientes.map((log) => (
                       <div key={log.id} className={`rounded-xl p-3 text-xs ${
-                        log.nivel === 'error'   ? 'bg-red-50 border border-red-100' :
-                        log.nivel === 'warning' ? 'bg-amber-50 border border-amber-100' :
+                        log.nivel.toLowerCase() === 'error'   ? 'bg-red-50 border border-red-100' :
+                        log.nivel.toLowerCase() === 'warning' ? 'bg-amber-50 border border-amber-100' :
                         'bg-green-50 border border-green-100'
                       }`}>
                         <div className="flex items-center justify-between mb-1">
                           <span className={`font-bold uppercase tracking-wide ${
-                            log.nivel === 'error'   ? 'text-red-600' :
-                            log.nivel === 'warning' ? 'text-amber-600' :
+                            log.nivel.toLowerCase() === 'error'   ? 'text-red-600' :
+                            log.nivel.toLowerCase() === 'warning' ? 'text-amber-600' :
                             'text-green-700'
                           }`}>{log.nivel}</span>
                           <span className="text-nutri-gray-400">{fmtHora(log.created_at)}</span>
