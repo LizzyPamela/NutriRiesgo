@@ -16,6 +16,7 @@ import {
   FlaskConical,
   Info,
   TrendingUp,
+  ShieldCheck,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { path: '/alimentos',       label: 'Alimentos',         icon: Search },
   { path: '/perfil',          label: 'Perfil',            icon: User },
   { path: '/acerca-de',       label: 'Acerca de',         icon: Info },
+  { path: '/admin',           label: 'Auditoría',         icon: ShieldCheck },
 ];
 
 interface SidebarContentProps {
@@ -40,6 +42,7 @@ interface SidebarContentProps {
 }
 
 function SidebarContent({ pathname, displayName, email, onLogout, onClose }: SidebarContentProps) {
+  const { isAdmin } = useAuth();
   return (
     <>
       <div className="flex items-center justify-between px-6 py-5 border-b border-nutri-gray-200 shrink-0">
@@ -64,7 +67,7 @@ function SidebarContent({ pathname, displayName, email, onLogout, onClose }: Sid
       </div>
 
       <nav className="flex-1 px-4 py-5 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ path, label, icon: Icon }) => {
+        {navItems.filter(({ path }) => path !== '/admin' || isAdmin).map(({ path, label, icon: Icon }) => {
           const active = pathname === path;
           return (
             <Link

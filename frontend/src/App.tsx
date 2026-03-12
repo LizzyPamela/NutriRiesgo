@@ -15,6 +15,7 @@ import Proyecciones from './pages/Proyecciones';
 import ExamenesMedicos from './pages/ExamenesMedicos';
 import RegistroExitoso from './pages/RegistroExitoso';
 import AcercaDe from './pages/AcercaDe';
+import Admin from './pages/Admin';
 
 function PrivateRoute() {
   const { session, loading } = useAuth();
@@ -28,6 +29,22 @@ function PrivateRoute() {
   }
 
   return session ? <Outlet /> : <Navigate to="/login" replace />;
+}
+
+function AdminRoute() {
+  const { session, isAdmin, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-nutri-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
 }
 
 function AppRoutes() {
@@ -49,6 +66,11 @@ function AppRoutes() {
           <Route path="/proyecciones"    element={<Proyecciones />} />
           <Route path="/examenes"        element={<ExamenesMedicos />} />
           <Route path="/acerca-de"       element={<AcercaDe />} />
+        </Route>
+      </Route>
+      <Route element={<AdminRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/admin" element={<Admin />} />
         </Route>
       </Route>
     </Routes>

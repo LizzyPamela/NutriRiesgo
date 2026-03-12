@@ -192,6 +192,9 @@ p { color: var(--color-nutri-muted); line-height: 1.7; }
 }
 ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
+/* ── Admin: gráfico de barras dinámico ───────────────── */
+.bar-dynamic { height: var(--bar-h, 4px); }
+
 /* ── Selección de texto ──────────────────────────────── */
 ::selection {
   background: rgba(56, 102, 65, 0.15);

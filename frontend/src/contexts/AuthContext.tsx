@@ -3,11 +3,18 @@ import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
+// Emails con acceso al panel de auditoría
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS ?? '')
+  .split(',')
+  .map((e: string) => e.trim().toLowerCase())
+  .filter(Boolean);
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   userId: string | null;
   displayName: string;
+  isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -17,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   userId: null,
   displayName: '',
+  isAdmin: false,
   loading: true,
   signOut: async () => {},
 });
@@ -45,16 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const user = session?.user ?? null;
-  // user_id es el UUID de Supabase Auth — se usa en todos los endpoints del backend
   const userId = user?.id ?? null;
   const displayName =
     (user?.user_metadata?.nombre as string) ||
     user?.email?.split('@')[0] ||
     'Usuario';
+  const isAdmin = ADMIN_EMAILS.length > 0
+    ? ADMIN_EMAILS.includes((user?.email ?? '').toLowerCase())
+    : true; // si no hay lista configurada, solo en dev, permite acceso
 
   return (
     <AuthContext.Provider
-      value={{ session, user, userId, displayName, loading, signOut }}
+      value={{ session, user, userId, displayName, isAdmin, loading, signOut }}
     >
       {children}
     </AuthContext.Provider>

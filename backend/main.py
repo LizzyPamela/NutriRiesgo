@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from config import settings, validate_config
-from api import chat, alimentos, perfil, comidas, health, proyecciones
+from api import chat, alimentos, perfil, comidas, health, proyecciones, admin
 
 # ============================================================================
 # LIFESPAN - Inicialización y limpieza
@@ -130,6 +130,12 @@ app.include_router(
     proyecciones.router,
     prefix="/proyecciones",
     tags=["Proyecciones ECNT"]
+)
+
+app.include_router(
+    admin.router,
+    prefix="/admin",
+    tags=["Admin / Auditoría"]
 )
 
 # ============================================================================

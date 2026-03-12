@@ -13,7 +13,8 @@ from services.openai_service import get_openai_service
 from utils.database import (
     buscar_conocimiento_semantico,
     guardar_conversacion,
-    obtener_perfil_usuario
+    obtener_perfil_usuario,
+    registrar_log_sistema
 )
 
 class RAGService:
@@ -30,6 +31,13 @@ class RAGService:
         
         print("✅ RAG Service inicializado")
     
+    def _log(self, nivel: str, mensaje: str, detalles: dict = None):
+        """Registra log en BD sin lanzar excepción si falla."""
+        try:
+            registrar_log_sistema(nivel, mensaje, detalles)
+        except Exception as e:
+            print(f"⚠️  Log fallido ({nivel}): {e}")
+
     async def procesar_consulta(
         self,
         consulta: str,
@@ -54,9 +62,15 @@ class RAGService:
         
         if debe_abstenerse:
             mensaje = self.abstention_service.generar_mensaje_abstension(razon_abstension)
-            
             tiempo_ms = int((time.time() - inicio) * 1000)
-            
+
+            self._log("warning", "Abstencion activada", {
+                "razon": razon_abstension,
+                "consulta_preview": consulta[:80],
+                "user_id": user_id,
+                "tiempo_ms": tiempo_ms
+            })
+
             return {
                 "respuesta": mensaje,
                 "abstension": True,
@@ -143,6 +157,11 @@ class RAGService:
         if requiere_derivacion:
             mensaje_derivacion = self.abstention_service.generar_mensaje_derivacion(razon_derivacion)
             respuesta = f"{respuesta}\n\n{mensaje_derivacion}"
+            self._log("warning", "Derivacion medica requerida", {
+                "razon": razon_derivacion,
+                "user_id": user_id,
+                "imc": perfil_usuario.get("imc") if perfil_usuario else None
+            })
         
         # 12. Guardar conversación en thread (sync DB no puede bloquear el event loop)
         tiempo_ms = int((time.time() - inicio) * 1000)
@@ -170,7 +189,18 @@ class RAGService:
         except Exception as e:
             print(f"⚠️  Error guardando conversación: {type(e).__name__}: {str(e)}")
             conversation_id = None
-        
+
+        self._log("info", "Consulta procesada", {
+            "tipo_consulta": tipo_consulta,
+            "tiempo_ms": tiempo_ms,
+            "costo_usd": costo_usd,
+            "num_chunks": len(chunks_filtrados),
+            "nivel_confianza": nivel_confianza,
+            "derivacion": requiere_derivacion,
+            "user_id": user_id,
+            "conversation_id": conversation_id
+        })
+
         # 13. Retornar respuesta completa
         return {
             "respuesta": respuesta,
@@ -241,6 +271,7 @@ class RAGService:
     
     def _generar_respuesta_error(self, mensaje: str) -> Dict:
         """Genera una respuesta de error estándar"""
+        self._log("error", mensaje)
         return {
             "respuesta": f"⚠️ {mensaje}. Por favor, intenta de nuevo.",
             "abstension": False,
