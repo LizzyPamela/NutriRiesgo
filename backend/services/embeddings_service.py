@@ -1,76 +1,47 @@
 """
-Servicio de generación de embeddings
+Servicio de generación de embeddings usando OpenAI API
 """
 
-from sentence_transformers import SentenceTransformer
+from openai import OpenAI
 from typing import List
-from functools import lru_cache
 import numpy as np
+import os
+
+
+EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_DIMENSION = 1536
 
 
 class EmbeddingsService:
-    """Servicio para generar embeddings de texto"""
+    """Servicio para generar embeddings de texto usando OpenAI"""
 
-    def __init__(self, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"):
-        """
-        Inicializa el servicio de embeddings
-
-        Args:
-            model_name: Nombre del modelo de sentence-transformers
-        """
-        print(f"Cargando modelo de embeddings: {model_name}")
-        self.model = SentenceTransformer(model_name)
-        self.dimension = 384  # Dimensión del modelo
-        print(f"OK: Modelo cargado (dimension: {self.dimension})")
+    def __init__(self):
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.dimension = EMBEDDING_DIMENSION
+        print(f"OK: EmbeddingsService listo (modelo: {EMBEDDING_MODEL}, dim: {self.dimension})")
 
     def generar_embedding(self, texto: str) -> List[float]:
-        """
-        Genera embedding para un texto (con cache LRU de 100 entradas).
-
-        Args:
-            texto: Texto a embedear
-
-        Returns:
-            Lista de 384 floats representando el embedding
-        """
         if not texto or not texto.strip():
             raise ValueError("El texto no puede estar vacío")
 
-        return list(_embedding_cached(self, texto.strip()))
+        response = self.client.embeddings.create(
+            model=EMBEDDING_MODEL,
+            input=texto.strip()
+        )
+        return response.data[0].embedding
 
     def generar_embeddings_batch(self, textos: List[str]) -> List[List[float]]:
-        """
-        Genera embeddings para múltiples textos (batch)
-
-        Args:
-            textos: Lista de textos
-
-        Returns:
-            Lista de embeddings
-        """
         if not textos:
             return []
 
-        embeddings = self.model.encode(
-            textos,
-            batch_size=32,
-            show_progress_bar=False,
-            convert_to_numpy=True
+        response = self.client.embeddings.create(
+            model=EMBEDDING_MODEL,
+            input=textos
         )
-
-        return embeddings.tolist()
+        ordered = sorted(response.data, key=lambda x: x.index)
+        return [e.embedding for e in ordered]
 
     def calcular_similitud(self, embedding1: List[float], embedding2: List[float]) -> float:
-        """
-        Calcula similitud coseno entre dos embeddings
-
-        Args:
-            embedding1: Primer embedding
-            embedding2: Segundo embedding
-
-        Returns:
-            Similitud entre 0 y 1
-        """
         vec1 = np.array(embedding1)
         vec2 = np.array(embedding2)
 
@@ -82,13 +53,6 @@ class EmbeddingsService:
             return 0.0
 
         return float(dot_product / (norm1 * norm2))
-
-
-@lru_cache(maxsize=100)
-def _embedding_cached(service: EmbeddingsService, texto: str) -> tuple:
-    """Cache LRU para embeddings. Devuelve tuple (hashable) para que lru_cache funcione."""
-    embedding = service.model.encode(texto, convert_to_numpy=True)
-    return tuple(embedding.tolist())
 
 
 # Singleton global
