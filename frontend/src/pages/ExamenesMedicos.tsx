@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { obtenerPerfil } from '../services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
-type Interpretacion = 'normal' | 'borderline' | 'alto' | 'bajo' | 'prediabetes' | 'diabetes' ;
+type Interpretacion = 'normal' | 'borderline' | 'alto' | 'bajo' | 'prediabetes' | 'diabetes' | 'límite' | 'hiperinsulinemia / resistencia a la insulina';
 
 interface Rango {
   max?: number;
@@ -174,6 +174,8 @@ const interpretacionLabel: Record<Interpretacion, string> = {
   bajo:        'Bajo',
   prediabetes: 'Prediabetes',
   diabetes:    'Diabetes',
+  'límite':    'Límite',
+  'hiperinsulinemia / resistencia a la insulina': 'Hiperinsulinemia / Resistencia a la insulina',
 };
 
 const badgeClass: Record<Interpretacion, string> = {
@@ -183,6 +185,8 @@ const badgeClass: Record<Interpretacion, string> = {
   bajo:        'bg-blue-100 text-blue-700',
   prediabetes: 'bg-orange-100 text-orange-700',
   diabetes:    'bg-red-100 text-red-700',
+  'límite':    'bg-amber-100 text-amber-700',
+  'hiperinsulinemia / resistencia a la insulina': 'bg-red-100 text-red-700',
 };
 
 const STORAGE_KEY = 'nutririesgo_examenes';
