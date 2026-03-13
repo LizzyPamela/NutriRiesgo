@@ -26,6 +26,8 @@ interface RegData {
   tiene_hipertension: boolean;
   tiene_dislipidemia: boolean;
   antecedentes_cardiovasculares: boolean;
+  situacion_academica: string;
+  tipo_vivienda: string;
 }
 
 const defaultReg: RegData = {
@@ -34,6 +36,8 @@ const defaultReg: RegData = {
   nivel_actividad: 'moderado',
   tiene_diabetes: false, tiene_hipertension: false,
   tiene_dislipidemia: false, antecedentes_cardiovasculares: false,
+  situacion_academica: '',
+  tipo_vivienda: '',
 };
 
 const nivelesActividad: { value: string; label: string; desc: string; icon: LucideIcon }[] = [
@@ -42,6 +46,19 @@ const nivelesActividad: { value: string; label: string; desc: string; icon: Luci
   { value: 'moderado',  label: 'Moderado',   desc: '3-5 días/semana',          icon: Activity },
   { value: 'activo',    label: 'Activo',     desc: '6-7 días/semana',          icon: Flame },
   { value: 'muy_activo',label: 'Muy activo', desc: 'Ejercicio intenso diario', icon: Zap },
+];
+
+const situacionesAcademicas = [
+  { value: 'estudiando',          label: 'Estudiando',             desc: 'Solo clases presenciales o virtuales' },
+  { value: 'vacaciones',          label: 'De vacaciones',          desc: 'Período vacacional universitario' },
+  { value: 'trabaja',             label: 'Trabaja y estudia',      desc: 'Empleo formal o informal además de estudiar' },
+  { value: 'practica_profesional',label: 'Práctica profesional',   desc: 'Práctica o pasantía como parte de la carrera' },
+];
+
+const tiposVivienda = [
+  { value: 'familia_nucleo',    label: 'Familia nuclear',       desc: 'Con padres y/o hermanos' },
+  { value: 'alquila',           label: 'Alquiler propio',       desc: 'Solo o con compañeros de cuarto' },
+  { value: 'familia_extensa',   label: 'Familia extensa',       desc: 'Con tíos, abuelos, primos, cuñados u otro familiar' },
 ];
 
 const condicionesSalud = [
@@ -159,6 +176,10 @@ const Login = () => {
       const cintura = parseFloat(reg.perimetro_cintura_cm);
       if (!reg.perimetro_cintura_cm || cintura < 40 || cintura > 200) return 'Perímetro de cintura debe estar entre 40 y 200 cm.';
     }
+    if (step === 5) {
+      if (!reg.situacion_academica) return 'Selecciona tu situación académica actual.';
+      if (!reg.tipo_vivienda) return 'Selecciona tu tipo de vivienda actual.';
+    }
     return '';
   };
 
@@ -169,7 +190,7 @@ const Login = () => {
     setStep((s) => s + 1);
   };
 
-  // ── Registration submit (step 4) ────────────────────────────────────────
+  // ── Registration submit (step 5) ────────────────────────────────────────
   const handleRegister = async () => {
     setError('');
     setLoading(true);
@@ -190,6 +211,8 @@ const Login = () => {
             tiene_hipertension: reg.tiene_hipertension,
             tiene_dislipidemia: reg.tiene_dislipidemia,
             antecedentes_cardiovasculares: reg.antecedentes_cardiovasculares,
+            situacion_academica: reg.situacion_academica,
+            tipo_vivienda: reg.tipo_vivienda,
           },
         },
       });
@@ -299,12 +322,12 @@ const Login = () => {
           ) : (
             /* ── REGISTRATION STEPS ──────────────────────────────────────── */
             <div>
-              <StepProgress step={step} total={4} />
+              <StepProgress step={step} total={5} />
 
               {/* STEP 1 — Cuenta */}
               {step === 1 && (
                 <div className="space-y-4">
-                  <p className="text-sm font-semibold text-nutri-gray-600 mb-4">Paso 1 de 4 — Datos de cuenta</p>
+                  <p className="text-sm font-semibold text-nutri-gray-600 mb-4">Paso 1 de 5 — Datos de cuenta</p>
                   <div>
                     <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">Nombre Completo</label>
                     <div className="relative">
@@ -356,7 +379,7 @@ const Login = () => {
               {/* STEP 2 — Medidas */}
               {step === 2 && (
                 <div className="space-y-4">
-                  <p className="text-sm font-semibold text-nutri-gray-600 mb-4">Paso 2 de 4 — Datos físicos</p>
+                  <p className="text-sm font-semibold text-nutri-gray-600 mb-4">Paso 2 de 5 — Datos físicos</p>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -450,7 +473,7 @@ const Login = () => {
               {step === 3 && (
                 <div className="space-y-4">
                   <p className="text-sm font-semibold text-nutri-gray-600 mb-4">
-                    <Activity className="inline w-4 h-4 mr-1.5" />Paso 3 de 4 — Actividad física
+                    <Activity className="inline w-4 h-4 mr-1.5" />Paso 3 de 5 — Actividad física
                   </p>
                   <div className="space-y-2">
                     {nivelesActividad.map(({ value, label, desc, icon: Icon }) => (
@@ -494,7 +517,7 @@ const Login = () => {
               {step === 4 && (
                 <div className="space-y-4">
                   <div className="mb-1">
-                    <p className="text-sm font-semibold text-nutri-gray-600">Paso 4 de 4 — Condiciones de salud</p>
+                    <p className="text-sm font-semibold text-nutri-gray-600">Paso 4 de 5 — Condiciones de salud</p>
                     <p className="text-xs text-nutri-gray-500 mt-0.5">Opcional. Permite personalizar tus recomendaciones.</p>
                   </div>
                   <div className="space-y-3">
@@ -516,6 +539,79 @@ const Login = () => {
                   <div className="flex space-x-3">
                     <button
                       type="button" onClick={() => { setError(''); setStep(3); }}
+                      className="flex-1 py-2.5 border border-nutri-gray-300 text-nutri-gray-700 rounded-lg text-sm font-medium hover:bg-nutri-gray-50 flex items-center justify-center space-x-1.5"
+                    >
+                      <ArrowLeft className="w-4 h-4" /><span>Anterior</span>
+                    </button>
+                    <button
+                      type="button" onClick={() => { setError(''); setStep(5); }}
+                      className="flex-1 py-2.5 bg-nutri-primary text-white rounded-lg text-sm font-semibold hover:bg-nutri-primary-dark flex items-center justify-center space-x-1.5"
+                    >
+                      <span>Siguiente</span><ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 5 — Contexto estudiantil */}
+              {step === 5 && (
+                <div className="space-y-4">
+                  <div className="mb-1">
+                    <p className="text-sm font-semibold text-nutri-gray-600">Paso 5 de 5 — Situación académica y vivienda</p>
+                    <p className="text-xs text-nutri-gray-500 mt-0.5">Nos ayuda a entender mejor tu contexto de vida.</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-nutri-gray-700 mb-2">¿Cuál es tu situación académica actual?</p>
+                    <div className="space-y-2">
+                      {situacionesAcademicas.map(({ value, label, desc }) => (
+                        <button
+                          key={value} type="button" onClick={() => updateReg('situacion_academica', value)}
+                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                            reg.situacion_academica === value
+                              ? 'border-nutri-primary bg-nutri-primary/5 text-nutri-primary'
+                              : 'border-nutri-gray-200 bg-white hover:border-nutri-gray-300 text-nutri-gray-700'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold">{label}</p>
+                            <p className="text-xs text-nutri-gray-500">{desc}</p>
+                          </div>
+                          {reg.situacion_academica === value && (
+                            <div className="w-4 h-4 rounded-full bg-nutri-primary shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-nutri-gray-700 mb-2">¿Con quién vives actualmente?</p>
+                    <div className="space-y-2">
+                      {tiposVivienda.map(({ value, label, desc }) => (
+                        <button
+                          key={value} type="button" onClick={() => updateReg('tipo_vivienda', value)}
+                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                            reg.tipo_vivienda === value
+                              ? 'border-nutri-primary bg-nutri-primary/5 text-nutri-primary'
+                              : 'border-nutri-gray-200 bg-white hover:border-nutri-gray-300 text-nutri-gray-700'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold">{label}</p>
+                            <p className="text-xs text-nutri-gray-500">{desc}</p>
+                          </div>
+                          {reg.tipo_vivienda === value && (
+                            <div className="w-4 h-4 rounded-full bg-nutri-primary shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3 pt-1">
+                    <button
+                      type="button" onClick={() => { setError(''); setStep(4); }}
                       className="flex-1 py-2.5 border border-nutri-gray-300 text-nutri-gray-700 rounded-lg text-sm font-medium hover:bg-nutri-gray-50 flex items-center justify-center space-x-1.5"
                     >
                       <ArrowLeft className="w-4 h-4" /><span>Anterior</span>

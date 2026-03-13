@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { obtenerPerfil } from '../services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
-type Interpretacion = 'normal' | 'borderline' | 'alto' | 'bajo' | 'prediabetes' | 'diabetes';
+type Interpretacion = 'normal' | 'borderline' | 'alto' | 'bajo' | 'prediabetes' | 'diabetes' ;
 
 interface Rango {
   max?: number;
@@ -45,6 +45,19 @@ const EXAMENES: ExamenDef[] = [
       { min: 100, max: 125, label: 'prediabetes', color: 'text-amber-500' },
       { min: 126, label: 'diabetes',   color: 'text-red-600' },
     ],
+  },
+  {
+    id: "insulina_ayunas",
+    nombre: "Insulina en Ayunas",
+    unidad: "μU/mL",
+    condicion: ["resistencia a la insulina", "general"],
+    descripcion: "Mide el nivel de insulina en sangre tras 8h de ayuno.",
+    rangos: [
+      { min: 2, max: 13, label: "normal", color: "text-green-600" },
+      { min: 14, max: 15, label: "límite", color: "text-amber-500" },
+      { min: 16, max: 20, label: "alto", color: "text-orange-600" },
+      { min: 21, label: "hiperinsulinemia / resistencia a la insulina", color: "text-red-600" }
+    ]
   },
   {
     id: 'hba1c',

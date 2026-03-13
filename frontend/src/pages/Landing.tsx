@@ -157,7 +157,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-          <div className="grid md:grid-cols-3 gap-10">
+          <div className="grid md:grid-cols-2 gap-15">
 
             {/* Columna 1 — Marca */}
             <div>
@@ -176,37 +176,11 @@ const Landing = () => {
               </div>
             </div>
 
-            {/* Columna 2 — Accesos */}
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-white">
-                Accesos rápidos
-              </h3>
-              <ul className="space-y-3">
-                {[
-                  { label: 'Chat con IA',    path: '/chat' },
-                  { label: 'Alimentos',      path: '/alimentos' },
-                  { label: 'Estadísticas',   path: '/estadisticas' },
-                  { label: 'Iniciar sesión', path: '/login' },
-                ].map(({ label, path }) => (
-                  <li key={path}>
-                    <button
-                      type="button"
-                      onClick={() => handleNavigation(path)}
-                      className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
-                    >
-                      <span className="w-1 h-1 rounded-full bg-emerald-500 shrink-0" />
-                      <span>{label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
             {/* Columna 3 — Desarrolladora */}
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-widest text-white">
-                Desarrolladora
-              </h3>
+                Solutions 21
+              </h3> <br></br>
               <p className="text-white font-semibold text-sm mb-4">Lizzy Pamela Mejía Mejía</p>
               <div className="space-y-3">
                 <a
