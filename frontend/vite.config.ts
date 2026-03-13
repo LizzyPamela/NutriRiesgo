@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo-manual.png', 'vite.svg'],
       manifest: {
-        name: 'NutriColleague',
-        short_name: 'NutriColleague',
+        name: 'Nutri-Riesgo',
+        short_name: 'Nutri-Riesgo',
         description: 'Plataforma educativa de evaluación nutricional y riesgo cardiovascular.',
         theme_color: '#0066cc',
         background_color: '#ffffff',
