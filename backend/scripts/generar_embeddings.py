@@ -65,12 +65,41 @@ except Exception as e:
 # Actualizar dimension de la columna si es necesario
 print("\nActualizando dimension de embeddings en BD (384 -> 1536)...")
 try:
+    # Obtener definicion de vistas que dependen de la columna embedding
     cur.execute("""
-        ALTER TABLE knowledge_base
-        ALTER COLUMN embedding TYPE vector(1536)
+        SELECT viewname, definition
+        FROM pg_views
+        WHERE schemaname = 'public'
+          AND definition ILIKE '%knowledge_base%'
+          AND definition ILIKE '%embedding%'
     """)
+    vistas = cur.fetchall()
+
+    # Dropear vistas dependientes
+    for viewname, _ in vistas:
+        print(f"   Dropeando vista dependiente: {viewname}")
+        cur.execute(f'DROP VIEW IF EXISTS "{viewname}" CASCADE')
+
+    conn.commit()
+
+    # Alterar la columna
+    cur.execute("ALTER TABLE knowledge_base ALTER COLUMN embedding TYPE vector(1536)")
     conn.commit()
     print("OK: Columna actualizada a vector(1536)")
+
+    # Re-crear vistas con nueva dimension
+    for viewname, definition in vistas:
+        # Reemplazar vector(384) por vector(1536) en la definicion si aparece
+        new_def = definition.replace('vector(384)', 'vector(1536)')
+        # La definicion de pg_views ya incluye SELECT ..., hay que envolver en CREATE VIEW
+        try:
+            cur.execute(f'CREATE OR REPLACE VIEW "{viewname}" AS {new_def}')
+            conn.commit()
+            print(f"OK: Vista {viewname} re-creada")
+        except Exception as ve:
+            conn.rollback()
+            print(f"WARN: No se pudo re-crear {viewname}: {ve}")
+
 except Exception as e:
     conn.rollback()
     print(f"INFO: {str(e)} (puede que ya sea 1536)")

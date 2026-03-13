@@ -237,7 +237,7 @@ const Landing = () => {
             <p className="text-xs text-gray-500">
               © 2026 Nutri-Riesgo · Universidad Nacional Autónoma de Honduras UNAH
             </p>
-            <p className="text-xs text-gray-600">IS-115 I PAC 26 Solo con ines de investigación académica</p>
+            <p className="text-xs text-gray-600">IS-115 I PAC 2626</p>
           </div>
         </div>
       </footer>
