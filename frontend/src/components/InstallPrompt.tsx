@@ -44,10 +44,10 @@ export default function InstallPrompt() {
     <div className="fixed bottom-4 left-4 right-4 z-50 max-w-sm mx-auto">
       <div className="bg-white rounded-2xl shadow-xl border border-blue-100 p-4 flex items-center gap-3">
         <div className="bg-blue-600 rounded-xl p-2 shrink-0">
-          <img src="/logo-manual.png" alt="NutriRiesgo" className="w-8 h-8" />
+          <img src="/logo-manualq.png" alt="NutriColleague" className="w-8 h-8" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900">Instalar NutriRiesgo</p>
+          <p className="text-sm font-semibold text-gray-900">Instalar NutriColleague</p>
           <p className="text-xs text-gray-500 truncate">Accede sin internet desde tu celular</p>
         </div>
         <button

@@ -249,7 +249,7 @@ const Login = () => {
         <div className="text-center mb-8">
           <button type="button" onClick={() => navigate('/')} className="inline-flex items-center space-x-3">
             <Heart className="w-12 h-12 text-nutri-secondary fill-nutri-secondary" />
-            <span className="text-3xl font-bold text-nutri-primary">NutriRiesgo</span>
+            <span className="text-3xl font-bold text-nutri-primary">NutriColleague</span>
           </button>
         </div>
 
