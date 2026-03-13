@@ -84,7 +84,7 @@ export default function AcercaDe() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-nutri-gray-900 mb-1">Acerca de Nutri-Riesgo</h1>
+        <h1 className="text-2xl font-bold text-nutri-gray-900 mb-1">Acerca de NutriColleague</h1>
         <p className="text-sm text-nutri-gray-500">Proyecto de tesis — Universidad Nacional Autonoma de Honduras</p>
       </div>
 
@@ -94,10 +94,10 @@ export default function AcercaDe() {
           <div className="w-10 h-10 bg-nutri-primary/10 rounded-xl flex items-center justify-center">
             <Heart className="w-5 h-5 text-nutri-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-nutri-gray-900">¿Que es Nutri-Riesgo?</h2>
+          <h2 className="text-lg font-semibold text-nutri-gray-900">¿Que es NutriColleague?</h2>
         </div>
         <p className="text-sm text-nutri-gray-700 leading-relaxed mb-3">
-          Nutri-Riesgo es una plataforma de orientacion nutricional y prevencion cardiovascular
+          NutriColleague es una plataforma de orientacion nutricional y prevencion cardiovascular
           impulsada por inteligencia artificial, desarrollada como proyecto de tesis de grado.
         </p>
         <p className="text-sm text-nutri-gray-700 leading-relaxed">

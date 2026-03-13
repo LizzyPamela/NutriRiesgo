@@ -13,7 +13,7 @@ const Landing = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => handleNavigation('/')}>
               <Heart className="w-8 h-8 text-nutri-secondary fill-nutri-secondary" />
-              <span className="text-2xl font-bold text-nutri-primary">Nutri-Riesgo</span>
+              <span className="text-2xl font-bold text-nutri-primary">NutriColleague</span>
             </div>
             <button
               onClick={() => handleNavigation('/login')}
@@ -142,7 +142,7 @@ const Landing = () => {
             ¿Listo para comenzar tu transformación?
           </h2>
           <p className="text-white/90 text-lg mb-8">
-            Únete a Nutri-Riesgo y toma control de tu salud nutricional
+            Únete a NutriColleague y toma control de tu salud nutricional
           </p>
           <button
             onClick={() => handleNavigation('/login')}
@@ -165,7 +165,7 @@ const Landing = () => {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10">
                   <Heart className="w-5 h-5 text-emerald-400 fill-emerald-400" />
                 </div>
-                <span className="text-xl font-bold text-white tracking-tight">Nutri-Riesgo</span>
+                <span className="text-xl font-bold text-white tracking-tight">NutriColleague</span>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed mb-5">
                 Plataforma de orientación nutricional impulsada por IA para la prevención de riesgos cardiovasculares, desarrollada como parte de un proyecto académico en la Universidad Nacional Autónoma de Honduras.s
@@ -209,7 +209,7 @@ const Landing = () => {
           {/* Bottom bar */}
           <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2">
             <p className="text-xs text-gray-500">
-              © 2026 Nutri-Riesgo · Universidad Nacional Autónoma de Honduras UNAH
+              © 2026 NutriColleague · Universidad Nacional Autónoma de Honduras UNAH
             </p>
             <p className="text-xs text-gray-600">IS-115 I PAC 2626</p>
           </div>

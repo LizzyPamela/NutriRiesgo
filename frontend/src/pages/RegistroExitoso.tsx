@@ -25,7 +25,7 @@ export default function RegistroExitoso() {
               ¡Cuenta creada exitosamente!
             </h1>
             <p className="text-nutri-gray-600 text-sm">
-              Bienvenido/a a Nutri-Riesgo
+              Bienvenido/a a NutriColleague
             </p>
           </div>
 
@@ -88,7 +88,7 @@ export default function RegistroExitoso() {
         </div>
 
         <p className="text-center text-xs text-nutri-gray-400 mt-4">
-          Nutri-Riesgo &middot; Universidad Nacional Autónoma de Honduras &middot; Comayagua
+          NutriColleague &middot; Universidad Nacional Autónoma de Honduras &middot; Comayagua
         </p>
       </div>
     </div>

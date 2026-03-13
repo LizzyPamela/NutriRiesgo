@@ -645,7 +645,7 @@ const Login = () => {
         </div>
 
         <p className="text-center text-sm text-nutri-gray-500 mt-6">
-          Nutri-Riesgo © 2026 · Universidad Nacional Autónoma de Honduras UNAH
+          NutriColleague © 2026 · Universidad Nacional Autónoma de Honduras UNAH
         </p>
       </div>
     </div>

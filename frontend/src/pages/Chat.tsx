@@ -19,7 +19,7 @@ const Chat = () => {
     {
       id: '1',
       role: 'assistant',
-      content: '¡Hola! Soy tu asistente de nutrición de Nutri-Riesgo. Puedo ayudarte con:\n\n• Consultas sobre alimentación saludable\n• Información nutricional de alimentos\n• Recomendaciones para prevenir enfermedades cardiovasculares\n• Guías basadas en OMS, INCAP y autoridades hondureñas\n\n¿En qué puedo ayudarte hoy?',
+      content: '¡Hola! Soy tu asistente de nutrición de NutriColleague. Puedo ayudarte con:\n\n• Consultas sobre alimentación saludable\n• Información nutricional de alimentos\n• Recomendaciones para prevenir enfermedades cardiovasculares\n• Guías basadas en OMS, INCAP y autoridades hondureñas\n\n¿En qué puedo ayudarte hoy?',
       timestamp: new Date(),
     }
   ]);
