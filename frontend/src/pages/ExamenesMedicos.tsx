@@ -4,7 +4,7 @@ import {
   Calendar, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { obtenerPerfil } from '../services/api';
+import { obtenerPerfil, guardarResultadoExamen, obtenerHistorialExamenes, eliminarResultadoExamen } from '../services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type Interpretacion = 'normal' | 'borderline' | 'alto' | 'bajo' | 'prediabetes' | 'diabetes' | 'límite' | 'hiperinsulinemia / resistencia a la insulina';
@@ -191,7 +191,7 @@ const badgeClass: Record<Interpretacion, string> = {
 
 const STORAGE_KEY = 'nutririesgo_examenes';
 
-function loadResultados(): ResultadoGuardado[] {
+function loadResultadosLocal(): ResultadoGuardado[] {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
   } catch {
@@ -199,7 +199,7 @@ function loadResultados(): ResultadoGuardado[] {
   }
 }
 
-function saveResultados(data: ResultadoGuardado[]) {
+function saveResultadosLocal(data: ResultadoGuardado[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
@@ -398,15 +398,30 @@ export default function ExamenesMedicos() {
   const { userId } = useAuth();
   const [perfil, setPerfil] = useState<{ antecedentes_familiares?: { diabetes?: boolean; hipertension?: boolean }; imc?: number } | null>(null);
   const [loadingPerfil, setLoadingPerfil] = useState(true);
-  const [resultados, setResultados] = useState<ResultadoGuardado[]>(loadResultados);
+  const [resultados, setResultados] = useState<ResultadoGuardado[]>([]);
   const [modalExamenId, setModalExamenId] = useState<string | null>(null);
 
+  // Cargar perfil y historial al montar
   useEffect(() => {
     if (!userId) return;
+
     obtenerPerfil(userId)
       .then(setPerfil)
       .catch(() => setPerfil({}))
       .finally(() => setLoadingPerfil(false));
+
+    // Cargar historial desde API con fallback a localStorage
+    obtenerHistorialExamenes(userId)
+      .then((data) => {
+        const remotos: ResultadoGuardado[] = data.resultados ?? [];
+        setResultados(remotos);
+        // Sincronizar localStorage con los datos remotos
+        saveResultadosLocal(remotos);
+      })
+      .catch(() => {
+        // API no disponible: usar localStorage como fallback
+        setResultados(loadResultadosLocal());
+      });
   }, [userId]);
 
   const tieneDiabetes   = perfil?.antecedentes_familiares?.diabetes ?? false;
@@ -428,22 +443,44 @@ export default function ExamenesMedicos() {
     [resultados]
   );
 
-  const handleGuardar = (valor: number, fecha: string) => {
+  const handleGuardar = async (valor: number, fecha: string) => {
     if (!modalExamenId) return;
     const examen = EXAMENES.find((e) => e.id === modalExamenId);
     if (!examen) return;
     const interpretacion = interpretarValor(examen, valor).label;
     const nuevo: ResultadoGuardado = { examenId: modalExamenId, valor, fecha, interpretacion };
     const actualizado = [...resultados.filter((r) => !(r.examenId === modalExamenId && r.fecha === fecha)), nuevo];
+
+    // Actualizar UI optimísticamente
     setResultados(actualizado);
-    saveResultados(actualizado);
+    saveResultadosLocal(actualizado);
     setModalExamenId(null);
+
+    // Persistir en API (sin bloquear UX)
+    if (userId) {
+      guardarResultadoExamen(userId, {
+        examen_id: modalExamenId,
+        valor,
+        fecha,
+        interpretacion,
+      }).catch(() => {
+        // Fallo silencioso — ya quedó en localStorage
+        console.warn('No se pudo guardar el examen en el servidor; quedó en localStorage.');
+      });
+    }
   };
 
   const handleDelete = (examenId: string, fecha: string) => {
     const actualizado = resultados.filter((r) => !(r.examenId === examenId && r.fecha === fecha));
     setResultados(actualizado);
-    saveResultados(actualizado);
+    saveResultadosLocal(actualizado);
+
+    // Eliminar en API (sin bloquear UX)
+    if (userId) {
+      eliminarResultadoExamen(userId, examenId, fecha).catch(() => {
+        console.warn('No se pudo eliminar el examen en el servidor; eliminado localmente.');
+      });
+    }
   };
 
   const examenModal = EXAMENES.find((e) => e.id === modalExamenId);
@@ -495,7 +532,7 @@ export default function ExamenesMedicos() {
         {/* Nota informativa */}
         <div className="flex items-start space-x-2 bg-blue-50 border border-blue-200 rounded-xl p-3 mb-5 text-xs text-blue-700">
           <Info className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>Los resultados se guardan localmente en tu dispositivo. Esta herramienta no reemplaza la interpretación médica profesional.</span>
+          <span>Los resultados se sincronizan con tu cuenta. Si no hay conexión, se guardan localmente como respaldo. Esta herramienta no reemplaza la interpretación médica profesional.</span>
         </div>
 
         {/* Lista de exámenes */}

@@ -214,21 +214,34 @@ def obtener_perfil_usuario(user_id: str) -> Optional[Dict[str, Any]]:
 def registrar_log_sistema(
     nivel: str,
     mensaje: str,
-    detalles: Optional[Dict[str, Any]] = None
+    detalles: Optional[Dict[str, Any]] = None,
+    user_id: Optional[str] = None,
+    conversacion_id: Optional[str] = None,
+    componente: Optional[str] = None,
 ):
     """
-    Registra un log del sistema
-    
-    Args:
-        nivel: Nivel del log (info, warning, error)
-        mensaje: Mensaje del log
-        detalles: Detalles adicionales
+    Registra un log del sistema poblando las columnas dedicadas además de detalles JSON.
+    Si user_id/conversacion_id/componente no se pasan explícitamente, los extrae de detalles.
     """
+    # Extraer campos de detalles si no se pasaron explícitamente
+    _d = detalles or {}
+    _user_id       = user_id       or _d.get("user_id")
+    _conv_id       = conversacion_id or _d.get("conversation_id") or _d.get("conversacion_id")
+    _componente    = componente    or _d.get("componente")
+
     with get_db_cursor() as cur:
         cur.execute("""
-            INSERT INTO logs_sistema (nivel, mensaje, detalles)
-            VALUES (%s, %s, %s)
-        """, (nivel.upper(), mensaje, psycopg2.extras.Json(detalles) if detalles else None))
+            INSERT INTO logs_sistema
+                (nivel, componente, mensaje, detalles, user_id, conversacion_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            nivel.upper(),
+            _componente,
+            mensaje,
+            psycopg2.extras.Json(detalles) if detalles else None,
+            _user_id,
+            _conv_id,
+        ))
 
 # ============================================================================
 # FUNCIONES DE ESTADÍSTICAS

@@ -15,7 +15,7 @@ from models.chat import (
     ChunkRecuperado
 )
 from services.rag_service import get_rag_service
-from dependencies import get_current_user, require_auth, require_admin
+from dependencies import get_current_user, require_auth, require_admin, check_rate_limit
 from datetime import datetime
 
 router = APIRouter()
@@ -46,7 +46,8 @@ router = APIRouter()
 )
 async def consultar(
     request: ConsultaRequest,
-    current_user: Optional[str] = Depends(get_current_user)
+    current_user: Optional[str] = Depends(get_current_user),
+    _rate: None = Depends(check_rate_limit),
 ):
     """
     Procesa una consulta usando el sistema RAG

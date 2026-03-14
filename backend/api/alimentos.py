@@ -4,6 +4,7 @@ Endpoints para búsqueda y consulta de alimentos
 
 from fastapi import APIRouter, HTTPException, Query, status
 from typing import Optional, List
+from pydantic import BaseModel
 
 from models.chat import (
     BusquedaAlimentosRequest,
@@ -11,6 +12,11 @@ from models.chat import (
     AlimentoResponse
 )
 from utils.database import buscar_alimentos, obtener_alimento_completo
+
+
+class RecomendarAlimentosRequest(BaseModel):
+    consulta: str
+    user_id: Optional[str] = None
 
 router = APIRouter()
 
@@ -110,6 +116,93 @@ async def buscar_get(
         limite=limite
     )
     return await buscar(request)
+
+@router.post(
+    "/recomendar",
+    summary="Búsqueda semántica de contexto nutricional",
+    description="""
+    Busca chunks de conocimiento nutricional usando similitud semántica.
+    Solo retrieval puro — no llama a GPT.
+
+    **Retorna:** lista de { texto, autoridad, similitud }
+    """
+)
+async def recomendar(request: RecomendarAlimentosRequest):
+    """
+    Genera embedding de la consulta y busca los chunks más relevantes
+    en la base de conocimiento (knowledge_base) con similitud >= 0.3.
+    """
+    import asyncio
+    from services.embeddings_service import get_embeddings_service
+    from utils.database import buscar_conocimiento_semantico
+
+    if not request.consulta or not request.consulta.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="La consulta no puede estar vacía."
+        )
+
+    try:
+        embeddings_service = get_embeddings_service()
+        loop = asyncio.get_running_loop()
+
+        # Generar embedding en executor para no bloquear el event loop
+        embedding = await loop.run_in_executor(
+            None,
+            embeddings_service.generar_embedding,
+            request.consulta.strip()
+        )
+
+        # Pedir más chunks con evidencia media para tener de donde filtrar
+        chunks_raw = await loop.run_in_executor(
+            None,
+            lambda: buscar_conocimiento_semantico(
+                query_embedding=embedding,
+                limite=8,
+                nivel_evidencia_min='medio'
+            )
+        )
+
+        # Cabeceras que identifican tablas de composición INCAP crudas
+        _CABECERAS_TABLA = (
+            "Código NOMBRE", "Fracción Comestible",
+            "Riboﬂ avina", "Ác. Grasos", "Ác. grasos",
+        )
+
+        def _es_tabla_cruda(texto: str) -> bool:
+            if any(h in texto for h in _CABECERAS_TABLA):
+                return True
+            tokens = texto.split()
+            if len(tokens) < 8:
+                return False
+            codigos = sum(1 for t in tokens if t.isdigit() and len(t) == 5)
+            return codigos / len(tokens) > 0.08
+
+        # Filtrar: similitud mínima + excluir tablas crudas + límite 4
+        resultados = [
+            {
+                "texto": c["texto"],
+                "autoridad": c.get("autoridad") or "",
+                "similitud": float(c.get("similitud", 0)),
+            }
+            for c in chunks_raw
+            if float(c.get("similitud", 0)) >= 0.3
+            and not _es_tabla_cruda(c.get("texto", ""))
+        ][:4]
+
+        return {
+            "resultados": resultados,
+            "consulta": request.consulta,
+            "total": len(resultados),
+        }
+
+    except Exception as e:
+        print(f"Error en /alimentos/recomendar: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error en búsqueda semántica: {str(e)}"
+        )
+
 
 @router.get(
     "/{alimento_id}",

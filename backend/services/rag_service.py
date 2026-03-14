@@ -33,7 +33,6 @@ class RAGService:
     
     def _log(self, nivel: str, mensaje: str, detalles: dict = None):
         """Registra log en BD sin lanzar excepción si falla."""
-        # Convertir valores no serializables a string antes de insertar
         detalles_safe = None
         if detalles:
             detalles_safe = {
@@ -41,7 +40,12 @@ class RAGService:
                 for k, v in detalles.items()
             }
         try:
-            registrar_log_sistema(nivel, mensaje, detalles_safe)
+            registrar_log_sistema(
+                nivel,
+                mensaje,
+                detalles_safe,
+                componente="rag_service",
+            )
         except Exception as e:
             print(f"[LOG FALLIDO] {nivel}: {e}")
 

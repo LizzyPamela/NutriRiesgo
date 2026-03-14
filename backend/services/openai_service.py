@@ -191,8 +191,13 @@ _openai_service = None
 def get_openai_service() -> OpenAIService:
     """Obtiene la instancia singleton del servicio de OpenAI"""
     global _openai_service
-    
+
     if _openai_service is None:
-        _openai_service = OpenAIService()
-    
+        from config import settings
+        _openai_service = OpenAIService(
+            model=settings.OPENAI_MODEL,
+            temperature=settings.OPENAI_TEMPERATURE,
+            max_tokens=settings.OPENAI_MAX_TOKENS
+        )
+
     return _openai_service

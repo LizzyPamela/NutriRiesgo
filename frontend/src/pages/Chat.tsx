@@ -69,10 +69,18 @@ const Chat = () => {
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error:', error);
+      const axiosErr = error as { response?: { status?: number; data?: { detail?: string } } };
+      let contenido: string;
+      if (axiosErr?.response?.status === 429) {
+        contenido = axiosErr.response?.data?.detail
+          ?? 'Has enviado demasiadas consultas seguidas. Espera un momento y vuelve a intentarlo.';
+      } else {
+        contenido = 'Lo siento, hubo un error al procesar tu consulta. Por favor, intenta de nuevo.';
+      }
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Lo siento, hubo un error al procesar tu consulta. Por favor, intenta de nuevo.',
+        content: contenido,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);

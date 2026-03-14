@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from config import settings, validate_config
-from api import chat, alimentos, perfil, comidas, health, proyecciones, admin
+from api import chat, alimentos, perfil, comidas, health, proyecciones, admin, examenes
 
 # ============================================================================
 # LIFESPAN - Inicialización y limpieza
@@ -29,6 +29,27 @@ async def lifespan(app: FastAPI):
         print(f"❌ Error de configuración: {str(e)}")
         raise
     
+    # Crear tablas que no existan todavía
+    try:
+        from utils.database import get_db_cursor
+        with get_db_cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS examenes_resultados (
+                    id            UUID         DEFAULT gen_random_uuid() PRIMARY KEY,
+                    user_id       TEXT         NOT NULL,
+                    examen_id     TEXT         NOT NULL,
+                    valor         FLOAT        NOT NULL,
+                    fecha         DATE         NOT NULL,
+                    interpretacion TEXT        NOT NULL,
+                    created_at    TIMESTAMPTZ  DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_examenes_resultados_user_id
+                    ON examenes_resultados (user_id, fecha DESC);
+            """)
+        print("OK: Tabla examenes_resultados lista")
+    except Exception as e:
+        print(f"Advertencia: No se pudo crear tabla examenes_resultados: {e}")
+
     # Pre-cargar modelo de embeddings para evitar timeout en primer request
     try:
         from services.embeddings_service import get_embeddings_service
@@ -132,6 +153,12 @@ app.include_router(
     admin.router,
     prefix="/admin",
     tags=["Admin / Auditoría"]
+)
+
+app.include_router(
+    examenes.router,
+    prefix="/examenes",
+    tags=["Exámenes Médicos"]
 )
 
 # ============================================================================

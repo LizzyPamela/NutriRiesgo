@@ -78,6 +78,40 @@ export const obtenerTopHondurenos = async (limite: number = 20) => {
   return response.data;
 };
 
+export const recomendarAlimentos = async (consulta: string, userId?: string) => {
+  const response = await api.post('/alimentos/recomendar', {
+    consulta,
+    user_id: userId || null,
+  });
+  return response.data;
+};
+
+// ============================================================================
+// EXÁMENES MÉDICOS
+// ============================================================================
+
+export const guardarResultadoExamen = async (
+  userId: string,
+  datos: { examen_id: string; valor: number; fecha: string; interpretacion: string }
+) => {
+  const response = await api.post(`/examenes/${userId}`, datos);
+  return response.data;
+};
+
+export const obtenerHistorialExamenes = async (userId: string) => {
+  const response = await api.get(`/examenes/${userId}`);
+  return response.data;
+};
+
+export const eliminarResultadoExamen = async (
+  userId: string,
+  examenId: string,
+  fecha: string
+) => {
+  const response = await api.delete(`/examenes/${userId}/${examenId}/${fecha}`);
+  return response.data;
+};
+
 // ============================================================================
 // PERFIL (Para futuro)
 // ============================================================================

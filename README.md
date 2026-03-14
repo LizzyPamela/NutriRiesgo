@@ -1,6 +1,6 @@
-# NutriRiesgo — UNAH
+# NutriColleague — UNAH
 
-Plataforma educativa de evaluación nutricional y riesgo cardiovascular para estudiantes de la Universidad Nacional Autónoma de Honduras (UNAH).
+Plataforma educativa de evaluación nutricional y riesgo de enfermedades crónicas no transmisibles (ECNT) para estudiantes de la Universidad Nacional Autónoma de Honduras (UNAH).
 Combina una base de conocimiento de guías clínicas (RAG) con una base de datos de 92 891 alimentos para ofrecer consultas nutricionales contextualizadas y evaluación de riesgo personalizada.
 
 > **Aviso importante:** Este sistema es **EDUCATIVO**. No diagnostica enfermedades ni reemplaza la consulta médica profesional. Si presentas síntomas o resultados preocupantes, consulta a un médico o nutricionista.
@@ -20,7 +20,7 @@ Combina una base de conocimiento de guías clínicas (RAG) con una base de datos
 - Ingresa tus datos antropométricos: edad, sexo, peso, altura, perímetro de cintura
 - Indica tu nivel de actividad física y si eres fumador/a
 - Registra antecedentes familiares (diabetes, hipertensión, cardiopatía, obesidad)
-- El sistema calcula automáticamente tu IMC y categoría de riesgo cardiovascular (modelo PREVENT™ AHA)
+- El sistema calcula automáticamente tu IMC y puntuación de riesgo ECNT basada en criterios OPS/OMS
 
 ### 3. Chat nutricional inteligente
 
@@ -85,7 +85,7 @@ Combina una base de conocimiento de guías clínicas (RAG) con una base de datos
 | Capa | Tecnología |
 |---|---|
 | Backend | Python 3.13 · FastAPI · Uvicorn |
-| IA / RAG | OpenAI GPT-4 · Sentence Transformers (`paraphrase-multilingual-MiniLM-L12-v2`) |
+| IA / RAG | OpenAI GPT-4 · OpenAI `text-embedding-3-small` (embeddings 1536 dims) |
 | Base de datos | PostgreSQL + pgvector (vía Supabase) |
 | Autenticación | Supabase Auth |
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS v4 |
@@ -241,7 +241,7 @@ NutriRiesgo/
 │   ├── services/
 │   │   ├── rag_service.py       # Pipeline RAG completo
 │   │   ├── openai_service.py    # Integración GPT-4
-│   │   ├── embeddings_service.py # Sentence Transformers
+│   │   ├── embeddings_service.py # OpenAI text-embedding-3-small (1536 dims)
 │   │   └── abstention_service.py # Sistema de abstención médica
 │   ├── models/                  # Schemas Pydantic
 │   ├── utils/
@@ -358,5 +358,5 @@ Guías clínicas indexadas: 10 PDFs de OPS/OMS, INCAP y Ministerio de Salud de H
 - El proxy de Vite (`/api → http://localhost:8000`) evita problemas de CORS en desarrollo.
 - CORS del backend acepta `localhost:3000`, `localhost:5173` y el dominio de producción en Vercel.
 - El sistema de abstención médica rechaza respuestas con baja confianza o keywords médicas de alto riesgo.
-- Los embeddings usan el modelo multilingüe `paraphrase-multilingual-MiniLM-L12-v2` (384 dimensiones) para soporte en español.
+- Los embeddings usan el modelo `text-embedding-3-small` de OpenAI (1536 dimensiones), integrado con la misma infraestructura que GPT-4 para simplificar el despliegue.
 - La terminal de Windows usa cp1252 — evitar caracteres especiales en scripts Python si se ejecutan en CMD nativo.

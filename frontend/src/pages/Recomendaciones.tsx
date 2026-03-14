@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
   AlertCircle, CheckCircle, Info, ChevronDown, ChevronUp,
-  Loader2, TrendingUp,
+  Loader2, TrendingUp, HelpCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { obtenerPerfil, obtenerDiarioAlimentario } from '../services/api';
+import { obtenerPerfil, obtenerDiarioAlimentario, enviarConsulta } from '../services/api';
 import { calcularObjetivos, normalizarSexo } from '../utils/nutricion';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -388,7 +388,32 @@ function calcularMetaCalorias(perfil: PerfilBackend): number | null {
 // ── Card component ────────────────────────────────────────────────────────────
 function RecomendacionCard({ rec }: { rec: Recomendacion }) {
   const [expanded, setExpanded] = useState(false);
+  const [porQueRespuesta, setPorQueRespuesta] = useState<string | null>(null);
+  const [loadingPorQue, setLoadingPorQue] = useState(false);
   const cfg = nivelConfig[rec.nivel];
+
+  const handlePorQue = async () => {
+    if (porQueRespuesta) { setPorQueRespuesta(null); return; }
+    setLoadingPorQue(true);
+    try {
+      const result = await enviarConsulta(
+        `Explica brevemente por qué esta recomendación es importante: ${rec.titulo}`
+      );
+      setPorQueRespuesta(result.respuesta ?? 'Sin respuesta disponible.');
+    } catch (error) {
+      const axiosErr = error as { response?: { status?: number; data?: { detail?: string } } };
+      if (axiosErr?.response?.status === 429) {
+        setPorQueRespuesta(
+          axiosErr.response?.data?.detail
+          ?? 'Demasiadas consultas seguidas. Espera un momento y vuelve a intentarlo.'
+        );
+      } else {
+        setPorQueRespuesta('No se pudo obtener la explicación. Intenta de nuevo.');
+      }
+    } finally {
+      setLoadingPorQue(false);
+    }
+  };
 
   return (
     <div className={`rounded-2xl border p-4 ${cfg.bg} ${cfg.border}`}>
@@ -400,15 +425,35 @@ function RecomendacionCard({ rec }: { rec: Recomendacion }) {
             <p className="text-sm text-nutri-gray-600 mt-0.5">{rec.mensaje}</p>
           </div>
         </div>
-        <button
-          type="button"
-          aria-label={expanded ? 'Ocultar acciones' : 'Ver acciones'}
-          onClick={() => setExpanded((v) => !v)}
-          className="ml-3 shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors text-nutri-gray-500"
-        >
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+        <div className="ml-3 shrink-0 flex items-center space-x-1">
+          <button
+            type="button"
+            aria-label="¿Por qué es importante esta recomendación?"
+            onClick={handlePorQue}
+            disabled={loadingPorQue}
+            className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium text-nutri-primary hover:bg-nutri-primary/10 transition-colors disabled:opacity-50"
+          >
+            {loadingPorQue
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <HelpCircle className="w-3.5 h-3.5" />}
+            <span>¿Por qué?</span>
+          </button>
+          <button
+            type="button"
+            aria-label={expanded ? 'Ocultar acciones' : 'Ver acciones'}
+            onClick={() => setExpanded((v) => !v)}
+            className="p-1 rounded-lg hover:bg-black/5 transition-colors text-nutri-gray-500"
+          >
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
+
+      {porQueRespuesta && (
+        <div className="mt-3 ml-8 bg-white/70 border border-nutri-gray-200 rounded-xl p-3 text-sm text-nutri-gray-700 leading-relaxed">
+          {porQueRespuesta}
+        </div>
+      )}
 
       {expanded && (
         <ul className="mt-3 space-y-1.5 pl-8">

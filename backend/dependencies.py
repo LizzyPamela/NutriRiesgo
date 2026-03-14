@@ -3,9 +3,16 @@ Dependencias compartidas para FastAPI
 """
 
 import os
+import time
 import requests as http_requests
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, Depends, status
 from typing import Optional
+
+# ============================================================================
+# RATE LIMITING — estado en memoria
+# ============================================================================
+
+_rate_limit_store: dict[str, list[float]] = {}
 
 
 def _supabase_url() -> str:
@@ -114,11 +121,38 @@ async def require_admin(
 
 
 # ============================================================================
-# RATE LIMITING (placeholder)
+# RATE LIMITING
 # ============================================================================
 
-async def check_rate_limit(user_id: Optional[str] = None):
+async def check_rate_limit(
+    current_user: Optional[str] = Depends(get_current_user),
+) -> None:
     """
-    TODO: Implementar con Redis/memoria
+    Limita a 30 requests por minuto por user_id.
+    Lanza HTTP 429 si se supera el límite.
     """
-    pass
+    from config import settings
+
+    identifier = current_user or "anonymous"
+    now = time.time()
+    window = 60.0
+
+    if identifier not in _rate_limit_store:
+        _rate_limit_store[identifier] = []
+
+    # Limpiar timestamps fuera de la ventana
+    _rate_limit_store[identifier] = [
+        ts for ts in _rate_limit_store[identifier]
+        if now - ts < window
+    ]
+
+    if len(_rate_limit_store[identifier]) >= settings.RATE_LIMIT_PER_MINUTE:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Has superado el límite de {settings.RATE_LIMIT_PER_MINUTE} consultas "
+                "por minuto. Por favor, espera un momento antes de continuar."
+            ),
+        )
+
+    _rate_limit_store[identifier].append(now)
