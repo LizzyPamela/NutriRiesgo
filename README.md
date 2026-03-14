@@ -85,7 +85,7 @@ Combina una base de conocimiento de guías clínicas (RAG) con una base de datos
 | Capa | Tecnología |
 |---|---|
 | Backend | Python 3.13 · FastAPI · Uvicorn |
-| IA / RAG | OpenAI GPT-4 · OpenAI `text-embedding-3-small` (embeddings 1536 dims) |
+| IA / RAG | OpenAI GPT-4o-mini · OpenAI `text-embedding-3-small` (embeddings 1536 dims) |
 | Base de datos | PostgreSQL + pgvector (vía Supabase) |
 | Autenticación | Supabase Auth |
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS v4 |
@@ -99,7 +99,7 @@ Combina una base de conocimiento de guías clínicas (RAG) con una base de datos
 - Python 3.11+
 - Node.js 18+
 - Cuenta en [Supabase](https://supabase.com) con extensión `pgvector` activa
-- API Key de OpenAI (GPT-4)
+- API Key de OpenAI (GPT-4o-mini + text-embedding-3-small)
 
 ---
 
@@ -235,12 +235,15 @@ NutriRiesgo/
 │   ├── api/
 │   │   ├── health.py            # GET /health
 │   │   ├── chat.py              # POST /chat/consulta  (RAG)
-│   │   ├── alimentos.py         # GET /alimentos/buscar
+│   │   ├── alimentos.py         # GET /alimentos/buscar, POST /alimentos/recomendar
 │   │   ├── comidas.py           # CRUD /comidas
-│   │   └── perfil.py            # CRUD /perfil
+│   │   ├── perfil.py            # CRUD /perfil
+│   │   ├── examenes.py          # CRUD /examenes (historial médico)
+│   │   ├── proyecciones.py      # GET /proyecciones (riesgo ECNT)
+│   │   └── admin.py             # GET /admin (panel auditoría — solo admins)
 │   ├── services/
 │   │   ├── rag_service.py       # Pipeline RAG completo
-│   │   ├── openai_service.py    # Integración GPT-4
+│   │   ├── openai_service.py    # Integración GPT-4o-mini
 │   │   ├── embeddings_service.py # OpenAI text-embedding-3-small (1536 dims)
 │   │   └── abstention_service.py # Sistema de abstención médica
 │   ├── models/                  # Schemas Pydantic
@@ -306,7 +309,11 @@ NutriRiesgo/
 | `GET` | `/comidas/{user_id}` | Sí | Diario alimentario |
 | `POST` | `/comidas/registrar` | Sí | Registrar comida |
 | `DELETE` | `/comidas/{registro_id}` | Sí | Eliminar registro |
+| `POST` | `/alimentos/recomendar` | No | Búsqueda semántica RAG en guías nutricionales |
 | `GET` | `/proyecciones/{user_id}` | Sí | Proyecciones ECNT |
+| `POST` | `/examenes/{user_id}` | Sí | Guardar resultado de examen médico |
+| `GET` | `/examenes/{user_id}` | Sí | Historial de exámenes del usuario |
+| `DELETE` | `/examenes/{user_id}/{examen_id}/{fecha}` | Sí | Eliminar resultado de examen |
 | `GET` | `/admin/resumen` | Admin | Panel de auditoría |
 
 Documentación completa en `/docs` (Swagger UI) con el backend corriendo.
