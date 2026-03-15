@@ -6,6 +6,15 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { crearOActualizarPerfil } from '../services/api';
+
+const ACTIVIDAD_MAP: Record<string, string> = {
+  sedentario: 'sedentario',
+  ligero: 'ligero',
+  moderado: 'moderado',
+  activo: 'intenso',
+  muy_activo: 'intenso',
+};
 
 const DOMINIOS_UNAH = ['@unah.hn', '@unah.edu.hn'];
 const esEmailInstitucional = (email: string) =>
@@ -195,7 +204,7 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: reg.email,
         password: reg.password,
         options: {
@@ -217,6 +226,28 @@ const Login = () => {
         },
       });
       if (error) throw error;
+
+      // Guardar perfil en perfiles_usuarios directamente via Supabase
+      // (cubre el caso donde el trigger de BD falla o email confirmation está desactivada)
+      if (data.user) {
+        await supabase.from('perfiles_usuarios').upsert({
+          user_id: data.user.id,
+          email: reg.email,
+          edad: parseInt(reg.edad) || null,
+          sexo: reg.sexo || null,
+          peso_kg: parseFloat(reg.peso_kg) || null,
+          altura_cm: parseFloat(reg.altura_cm) || null,
+          perimetro_cintura_cm: parseFloat(reg.perimetro_cintura_cm) || null,
+          actividad_fisica: ACTIVIDAD_MAP[reg.nivel_actividad] ?? 'moderado',
+          antecedentes_familiares: {
+            diabetes: reg.tiene_diabetes,
+            hipertension: reg.tiene_hipertension,
+            cardiopatia: reg.antecedentes_cardiovasculares,
+            obesidad: false,
+          },
+        }, { onConflict: 'user_id' });
+      }
+
       navigate('/registro-exitoso');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al registrarse';
