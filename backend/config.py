@@ -56,8 +56,8 @@ class Settings:
     ALLOWED_ORIGINS: list = [
         "http://localhost:5173",
         "http://localhost:3000",
-        "https://nutri-riesgo.vercel.app",
-        "https://nutri-riesgo-*.vercel.app",
+        "https://nutri-colleague.vercel.app",
+        "https://nutri-colleague-*.vercel.app",
     ]
 
 settings = Settings()
