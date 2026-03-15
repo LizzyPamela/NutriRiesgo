@@ -52,7 +52,7 @@ function SidebarContent({ pathname, displayName, email, onLogout, onClose }: Sid
           className="flex items-center space-x-2"
         >
           <Heart className="w-7 h-7 text-nutri-secondary fill-nutri-secondary" />
-          <span className="text-xl font-bold text-nutri-primary">NutriRiesgo</span>
+          <span className="text-xl font-bold text-nutri-primary">NutriColleague</span>
         </Link>
         {onClose && (
           <button
@@ -166,7 +166,7 @@ export default function Layout() {
           </button>
           <div className="flex items-center space-x-2">
             <Heart className="w-5 h-5 text-nutri-secondary fill-nutri-secondary" />
-            <span className="font-bold text-nutri-primary">NutriRiesgo</span>
+            <span className="font-bold text-nutri-primary">NutriColleague</span>
           </div>
           <div className="w-9" />
         </header>
