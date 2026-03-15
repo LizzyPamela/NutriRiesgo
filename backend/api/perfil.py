@@ -16,7 +16,7 @@ router = APIRouter()
 
 # Columnas permitidas para INSERT/UPDATE — previene SQL injection por nombre de campo
 CAMPOS_PERMITIDOS = {
-    "edad", "sexo", "peso_kg", "altura_cm", "perimetro_cintura_cm",
+    "email", "edad", "sexo", "peso_kg", "altura_cm", "perimetro_cintura_cm",
     "antecedentes_familiares", "actividad_fisica", "fumador",
     "riesgo_prevent", "categoria_riesgo", "requiere_derivacion", "motivo_derivacion",
 }

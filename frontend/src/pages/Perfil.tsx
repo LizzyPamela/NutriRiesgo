@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, CheckCircle, Loader2, AlertCircle, Trash2, TriangleAlert, Info } from 'lucide-react';
+import { Save, CheckCircle, Loader2, AlertCircle, Trash2, TriangleAlert, Info, KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { obtenerPerfil, crearOActualizarPerfil, eliminarCuenta } from '../services/api';
+import { supabase } from '../lib/supabase';
 
 // Tipos alineados con el backend (perfil.py)
 type Sexo = 'M' | 'F' | '';
@@ -138,6 +139,14 @@ export default function Perfil() {
   const [showInfoPanel, setShowInfoPanel] = useState(false);
 
   // Eliminacion de cuenta
+  // Cambio de contraseña
+  const [nuevaContrasenia, setNuevaContrasenia] = useState('');
+  const [confirmarContrasenia, setConfirmarContrasenia] = useState('');
+  const [savingContrasenia, setSavingContrasenia] = useState(false);
+  const [contraseniaGuardada, setContraseniaGuardada] = useState(false);
+  const [errorContrasenia, setErrorContrasenia] = useState('');
+
+  // Eliminacion de cuenta
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -195,6 +204,7 @@ export default function Perfil() {
     setSaving(true);
     try {
       const payload = {
+        email: user?.email ?? null,
         edad: form.edad ? parseInt(form.edad) : null,
         sexo: form.sexo || null,
         peso_kg: form.peso_kg ? parseFloat(form.peso_kg) : null,
@@ -214,6 +224,30 @@ export default function Perfil() {
       setError('Error al guardar. Verifica tu conexión con el servidor.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCambiarContrasenia = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    setErrorContrasenia('');
+    if (nuevaContrasenia.length < 6) {
+      setErrorContrasenia('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (nuevaContrasenia !== confirmarContrasenia) {
+      setErrorContrasenia('Las contraseñas no coinciden.');
+      return;
+    }
+    setSavingContrasenia(true);
+    const { error } = await supabase.auth.updateUser({ password: nuevaContrasenia });
+    setSavingContrasenia(false);
+    if (error) {
+      setErrorContrasenia(error.message);
+    } else {
+      setContraseniaGuardada(true);
+      setNuevaContrasenia('');
+      setConfirmarContrasenia('');
+      setTimeout(() => setContraseniaGuardada(false), 3000);
     }
   };
 
@@ -573,6 +607,89 @@ export default function Perfil() {
               <>
                 <Save className="w-5 h-5" />
                 <span>Guardar Perfil</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Cuenta - correo y contraseña */}
+        <form
+          onSubmit={handleCambiarContrasenia}
+          className="mt-6 bg-white rounded-2xl border border-nutri-gray-200 p-6 shadow-sm space-y-5"
+        >
+          <h2 className="font-semibold text-nutri-gray-900 pb-2 border-b border-nutri-gray-100">
+            Cuenta
+          </h2>
+
+          {/* Correo (solo lectura) */}
+          <div>
+            <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
+              Correo electr&oacute;nico
+            </label>
+            <input
+              type="email"
+              value={user?.email ?? ''}
+              readOnly
+              className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm bg-nutri-gray-50 text-nutri-gray-500 cursor-not-allowed"
+            />
+            <p className="text-xs text-nutri-gray-400 mt-1">
+              El correo se gestiona desde Supabase. Contacta al administrador para cambiarlo.
+            </p>
+          </div>
+
+          {/* Nueva contraseña */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
+                Nueva contrase&ntilde;a
+              </label>
+              <input
+                type="password"
+                value={nuevaContrasenia}
+                onChange={(e) => { setNuevaContrasenia(e.target.value); setErrorContrasenia(''); }}
+                placeholder="M&iacute;nimo 6 caracteres"
+                autoComplete="new-password"
+                className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-nutri-gray-700 mb-1.5">
+                Confirmar contrase&ntilde;a
+              </label>
+              <input
+                type="password"
+                value={confirmarContrasenia}
+                onChange={(e) => { setConfirmarContrasenia(e.target.value); setErrorContrasenia(''); }}
+                placeholder="Repite la contrase&ntilde;a"
+                autoComplete="new-password"
+                className="w-full px-4 py-2.5 border border-nutri-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-nutri-primary focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {errorContrasenia && (
+            <div className="flex items-start space-x-2 bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{errorContrasenia}</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={savingContrasenia || !nuevaContrasenia}
+            className="flex items-center space-x-2 px-5 py-2.5 bg-nutri-primary text-white rounded-lg text-sm font-semibold hover:bg-nutri-primary-dark transition-colors disabled:opacity-50"
+          >
+            {savingContrasenia ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : contraseniaGuardada ? (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                <span>Contrase&ntilde;a actualizada</span>
+              </>
+            ) : (
+              <>
+                <KeyRound className="w-4 h-4" />
+                <span>Cambiar contrase&ntilde;a</span>
               </>
             )}
           </button>
