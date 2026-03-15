@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { crearOActualizarPerfil } from '../services/api';
 
 const ACTIVIDAD_MAP: Record<string, string> = {
   sedentario: 'sedentario',
