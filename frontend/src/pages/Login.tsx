@@ -231,6 +231,7 @@ const Login = () => {
       if (data.user) {
         await supabase.from('perfiles_usuarios').upsert({
           user_id: data.user.id,
+          nombre: reg.nombre,
           email: reg.email,
           edad: parseInt(reg.edad) || null,
           sexo: reg.sexo || null,

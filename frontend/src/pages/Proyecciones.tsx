@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { obtenerProyecciones, obtenerEvidenciaProyeccion } from '../services/api';
+import { supabase } from '../lib/supabase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface FactorRiesgo {
@@ -299,7 +300,23 @@ export default function Proyecciones() {
   useEffect(() => {
     if (!userId) return;
     obtenerProyecciones(userId)
-      .then((res) => setDatos(res))
+      .then((res) => {
+        setDatos(res);
+        // Guardar proyecciones en BD para análisis longitudinal
+        const filas = res.proyecciones.map((p: ProyeccionEnfermedad) => ({
+          user_id: userId,
+          enfermedad: p.enfermedad,
+          score_total: p.puntaje,
+          score_perfil: p.puntaje_perfil,
+          score_dieta: p.puntaje_dieta,
+          nivel_riesgo: p.riesgo,
+          tendencia_dieta: p.patron_dieta?.tendencia ?? null,
+          factores: p.factores_presentes,
+        }));
+        supabase.from('proyecciones_ecnt').insert(filas).then(({ error }) => {
+          if (error) console.warn('No se pudieron guardar proyecciones:', error.message);
+        });
+      })
       .catch((err) => {
         const isTimeout = err?.code === 'ECONNABORTED' || err?.message?.includes('timeout');
         setError(

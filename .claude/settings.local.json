@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(python scripts/process_ecnt.py)",
-      "Bash(python backend/scripts/indexar_ecnt.py)"
+      "Bash(python backend/scripts/indexar_ecnt.py)",
+      "Bash(find /c/Users/Lizzy.Mejia/Documents/GitHub/NutriRiesgo/frontend/src -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js \\\\\\))"
     ]
   }
 }

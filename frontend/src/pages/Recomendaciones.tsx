@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { obtenerPerfil, obtenerDiarioAlimentario, enviarConsulta } from '../services/api';
 import { calcularObjetivos, normalizarSexo } from '../utils/nutricion';
+import { supabase } from '../lib/supabase';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type Nivel = 'ok' | 'info' | 'precaucion' | 'alerta';
@@ -475,6 +476,7 @@ export default function Recomendaciones() {
   const [perfil, setPerfil] = useState<PerfilBackend | null>(null);
   const [promedios, setPromedios] = useState<ReturnType<typeof calcularPromedios>>(null);
   const [loading, setLoading] = useState(true);
+  const [recomendaciones, setRecomendaciones] = useState<Recomendacion[]>([]);
 
   useEffect(() => {
     if (!userId) return;
@@ -496,6 +498,34 @@ export default function Recomendaciones() {
     };
     load();
   }, [userId]);
+
+  // Generar y guardar recomendaciones cada vez que cambian perfil o dieta
+  useEffect(() => {
+    if (!perfil || !perfil.imc || !userId) return;
+    const recs = generarRecomendaciones(perfil, promedios);
+    setRecomendaciones(recs);
+
+    const hoy = new Date().toISOString().split('T')[0];
+    supabase.from('recomendaciones_guardadas').upsert({
+      user_id: userId,
+      fecha: hoy,
+      recomendaciones: recs,
+      imc: perfil.imc,
+      peso_kg: perfil.peso_kg ?? null,
+      cintura_cm: perfil.perimetro_cintura_cm ?? null,
+      calorias_promedio: promedios?.calorias_promedio ?? null,
+      pct_carbs: promedios?.pct_carbs ?? null,
+      pct_proteina: promedios?.pct_proteina ?? null,
+      pct_grasas: promedios?.pct_grasas ?? null,
+      dias_con_datos: promedios?.dias_con_datos ?? null,
+      total_alertas: recs.filter((r) => r.nivel === 'alerta').length,
+      total_precauciones: recs.filter((r) => r.nivel === 'precaucion').length,
+      total_info: recs.filter((r) => r.nivel === 'info').length,
+      total_ok: recs.filter((r) => r.nivel === 'ok').length,
+    }, { onConflict: 'user_id,fecha' }).then(({ error }) => {
+      if (error) console.error('Error guardando recomendaciones:', error.message, error.details, error.hint);
+    });
+  }, [perfil, promedios, userId]);
 
   if (loading) {
     return (
@@ -521,7 +551,6 @@ export default function Recomendaciones() {
     );
   }
 
-  const recomendaciones = generarRecomendaciones(perfil, promedios);
   const alertas    = recomendaciones.filter((r) => r.nivel === 'alerta');
   const precaution = recomendaciones.filter((r) => r.nivel === 'precaucion');
   const info       = recomendaciones.filter((r) => r.nivel === 'info');
