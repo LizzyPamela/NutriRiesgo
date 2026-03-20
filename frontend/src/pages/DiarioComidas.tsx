@@ -115,7 +115,11 @@ export default function DiarioComidas() {
   } | null>(null);
 
   // TODO: persistir hidratacion en backend (trabajo futuro)
-  const [vasosRegistrados, setVasosRegistrados] = useState(0);
+  //const [vasosRegistrados, setVasosRegistrados] = useState(0);
+  const [vasosRegistrados, setVasosRegistrados] = useState<number>(() => {
+  const hoyKey = `hidratacion_${fechaHoyHonduras()}_${userId ?? 'guest'}`;
+  return parseInt(localStorage.getItem(hoyKey) ?? '0', 10) || 0;
+});
   const [mlManuales, setMlManuales] = useState('');
   const [mostrarInputMl, setMostrarInputMl] = useState(false);
   const [mostrarTooltipAgua, setMostrarTooltipAgua] = useState(false);
@@ -144,11 +148,24 @@ export default function DiarioComidas() {
   }, [userId]);
 
   // Reiniciar vasos al cambiar de fecha
-  useEffect(() => {
-    setVasosRegistrados(0);
-    setMlManuales('');
-    setMostrarInputMl(false);
-  }, [fecha]);
+  // useEffect(() => {
+  //   setVasosRegistrados(0);
+  //   setMlManuales('');
+  //   setMostrarInputMl(false);
+  // }, [fecha]);
+useEffect(() => {
+  const key = `hidratacion_${fecha}_${userId ?? 'guest'}`;
+  const guardado = parseInt(localStorage.getItem(key) ?? '0', 10) || 0;
+  setVasosRegistrados(guardado);
+  setMlManuales('');
+  setMostrarInputMl(false);
+}, [fecha, userId]);
+
+useEffect(() => {
+  if (!userId) return;
+  const key = `hidratacion_${fecha}_${userId}`;
+  localStorage.setItem(key, String(vasosRegistrados));
+}, [vasosRegistrados, fecha, userId]);
 
   // Cargar alimentos frecuentes cuando se abre el formulario
   useEffect(() => {
