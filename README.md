@@ -67,6 +67,8 @@ Combina una base de conocimiento de guías clínicas (RAG) con una base de datos
 |---|---|---|
 | Landing | `/` | Público |
 | Login / Registro | `/login` | Público |
+| Registro exitoso | `/registro-exitoso` | Público |
+| Acerca de | `/acerca-de` | Público |
 | Dashboard | `/dashboard` | Autenticado |
 | Chat nutricional IA | `/chat` | Autenticado |
 | Diario de comidas | `/diario` | Autenticado |
@@ -139,7 +141,7 @@ VITE_SUPABASE_ANON_KEY=<anon-jwt>
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/<org>/NutriRiesgo.git
+git clone https://github.com/LizzyPamela/NutriRiesgo.git
 cd NutriRiesgo
 ```
 
@@ -261,14 +263,21 @@ NutriRiesgo/
 │   │   ├── pages/
 │   │   │   ├── Landing.tsx
 │   │   │   ├── Login.tsx
+│   │   │   ├── RegistroExitoso.tsx
+│   │   │   ├── AcercaDe.tsx
 │   │   │   ├── Dashboard.tsx
 │   │   │   ├── Chat.tsx
 │   │   │   ├── DiarioComidas.tsx
 │   │   │   ├── Estadisticas.tsx
 │   │   │   ├── Perfil.tsx
-│   │   │   └── BusquedaAlimentos.tsx
+│   │   │   ├── BusquedaAlimentos.tsx
+│   │   │   ├── ExamenesMedicos.tsx
+│   │   │   ├── Proyecciones.tsx
+│   │   │   ├── Recomendaciones.tsx
+│   │   │   └── Admin.tsx
 │   │   ├── components/
-│   │   │   └── Layout.tsx       # Sidebar + shell
+│   │   │   ├── Layout.tsx          # Sidebar + shell
+│   │   │   └── InstallPrompt.tsx   # Banner de instalación PWA
 │   │   ├── contexts/
 │   │   │   └── AuthContext.tsx
 │   │   ├── services/
@@ -367,3 +376,17 @@ Guías clínicas indexadas: 10 PDFs de OPS/OMS, INCAP y Ministerio de Salud de H
 - El sistema de abstención médica rechaza respuestas con baja confianza o keywords médicas de alto riesgo.
 - Los embeddings usan el modelo `text-embedding-3-small` de OpenAI (1536 dimensiones), integrado con la misma infraestructura que GPT-4 para simplificar el despliegue.
 - La terminal de Windows usa cp1252 — evitar caracteres especiales en scripts Python si se ejecutan en CMD nativo.
+
+---
+
+## Licencia
+
+Este proyecto está protegido bajo una **Licencia de Uso Académico y de Investigación con Atribución** (versión 1.0, 2026).
+
+- Uso permitido **únicamente** con fines académicos o de investigación sin fines de lucro.
+- **Atribución obligatoria** en toda publicación, tesis o trabajo derivado.
+- Queda **prohibido** el uso comercial, la redistribución sin permiso y la eliminación de avisos de copyright.
+- El incumplimiento constituye infracción a la Ley sobre Derecho de Autor y Derechos Conexos de Honduras (Decreto No. 4-99-E).
+
+Copyright (c) 2026 Lizzy P. Mejía — Todos los derechos reservados.
+Ver el archivo [LICENSE](LICENSE) para los términos completos.
